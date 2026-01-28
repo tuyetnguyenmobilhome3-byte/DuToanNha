@@ -10,6 +10,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
         tailwind.config = {
@@ -187,7 +189,43 @@
 
         <!-- STEP 4: RESULTS & EXPORT -->
         <div id="step3-container" class="hidden container-card mt-8 mb-24">
-            <h2 class="text-2xl font-bold text-primary mb-6 border-l-4 border-accent pl-4">Bảng Tổng Hợp Kinh Phí</h2>
+            <h2 class="text-2xl font-bold text-primary mb-6 border-l-4 border-accent pl-4">Kết Quả Dự Toán Chi Tiết</h2>
+
+            <!-- Dashboard & Settings -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Chart -->
+                <div class="bg-section-bg p-4 rounded-xl border border-gray-200 flex flex-col items-center">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">Biểu Đồ Cơ Cấu Chi Phí</h3>
+                    <div class="w-full max-w-xs">
+                        <canvas id="costChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div class="bg-section-bg p-6 rounded-xl border border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">Tham Số Tổng Hợp Kinh Phí</h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4 items-center">
+                            <label class="text-sm font-medium text-gray-600">Chi phí chung (C) (%)</label>
+                            <input type="number" id="cfg_chiPhiChung" class="form-input text-right" value="5.0" step="0.1">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 items-center">
+                            <label class="text-sm font-medium text-gray-600">Thu nhập chịu thuế tính trước (TL) (%)</label>
+                            <input type="number" id="cfg_thuNhapChiuThue" class="form-input text-right" value="5.5" step="0.1">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 items-center">
+                            <label class="text-sm font-medium text-gray-600">Thuế GTGT (VAT) (%)</label>
+                            <input type="number" id="cfg_vat" class="form-input text-right" value="8.0" step="1">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 items-center">
+                            <label class="text-sm font-medium text-gray-600">Chi phí dự phòng (%)</label>
+                            <input type="number" id="cfg_duPhong" class="form-input text-right" value="5.0" step="1">
+                        </div>
+                        <button id="recalcSummaryBtn" class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-2 rounded mt-2">Cập nhật Bảng Tổng Hợp</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex gap-4 mb-6 print-hide">
                 <button id="exportExcelBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center">
                     Xuất Excel
@@ -908,18 +946,18 @@
                 // --- BUILD RESULT ITEMS ---
                 // We return a list of items compatible with the Results Table
                 return [
-                    { maHieu: 'AF.11110', name: 'Bê tông lót móng', unit: 'm³', quantity: v_bt_lot, price: 1020000 },
-                    { maHieu: 'AF.41110', name: 'Bê tông móng', unit: 'm³', quantity: v_bt_mong, price: 1360000 },
-                    { maHieu: 'AF.42110', name: 'Bê tông cổ móng', unit: 'm³', quantity: v_bt_co, price: 1445000 },
-                    { maHieu: 'AF.43110', name: 'Bê tông giằng móng', unit: 'm³', quantity: v_bt_giang, price: 1445000 },
-                    { maHieu: 'AF.43110', name: 'Bê tông giằng bó nền', unit: 'm³', quantity: v_bt_bonen, price: 1445000 },
-                    { maHieu: 'AF.31110', name: 'Cốt thép móng', unit: 'tấn', quantity: kl_thepMong_kg/1000, price: 18000000 },
-                    { maHieu: 'AF.32110', name: 'Cốt thép cổ móng', unit: 'tấn', quantity: kl_thepCo_kg/1000, price: 18000000 },
-                    { maHieu: 'AF.33110', name: 'Cốt thép giằng móng', unit: 'tấn', quantity: kl_thepGiang_kg/1000, price: 18000000 },
-                    { maHieu: 'AF.33110', name: 'Cốt thép giằng bó nền', unit: 'tấn', quantity: kl_thepBoNen_kg/1000, price: 18000000 },
-                    { maHieu: 'AE.21110', name: 'Xây tường móng', unit: 'm³', quantity: i.tm_tongDai * i.tm_cao * i.tm_day, price: 910000 },
-                    { maHieu: 'AB.61110', name: 'Lấp cát nền', unit: 'm³', quantity: area * getVal('nen_dayCat'), price: 196000 },
-                    { maHieu: 'AF.41110', name: 'Bê tông Bể Tự Hoại', unit: 'm³', quantity: v_bt_bth, price: 1530000 },
+                    { maHieu: 'AF.11110', name: 'Bê tông lót móng', unit: 'm³', quantity: v_bt_lot, price: 1020000, type: 'VL' },
+                    { maHieu: 'AF.41110', name: 'Bê tông móng', unit: 'm³', quantity: v_bt_mong, price: 1360000, type: 'VL' },
+                    { maHieu: 'AF.42110', name: 'Bê tông cổ móng', unit: 'm³', quantity: v_bt_co, price: 1445000, type: 'VL' },
+                    { maHieu: 'AF.43110', name: 'Bê tông giằng móng', unit: 'm³', quantity: v_bt_giang, price: 1445000, type: 'VL' },
+                    { maHieu: 'AF.43110', name: 'Bê tông giằng bó nền', unit: 'm³', quantity: v_bt_bonen, price: 1445000, type: 'VL' },
+                    { maHieu: 'AF.31110', name: 'Cốt thép móng', unit: 'tấn', quantity: kl_thepMong_kg/1000, price: 18000000, type: 'VL' },
+                    { maHieu: 'AF.32110', name: 'Cốt thép cổ móng', unit: 'tấn', quantity: kl_thepCo_kg/1000, price: 18000000, type: 'VL' },
+                    { maHieu: 'AF.33110', name: 'Cốt thép giằng móng', unit: 'tấn', quantity: kl_thepGiang_kg/1000, price: 18000000, type: 'VL' },
+                    { maHieu: 'AF.33110', name: 'Cốt thép giằng bó nền', unit: 'tấn', quantity: kl_thepBoNen_kg/1000, price: 18000000, type: 'VL' },
+                    { maHieu: 'AE.21110', name: 'Xây tường móng', unit: 'm³', quantity: i.tm_tongDai * i.tm_cao * i.tm_day, price: 910000, type: 'VL' },
+                    { maHieu: 'AB.61110', name: 'Lấp cát nền', unit: 'm³', quantity: area * getVal('nen_dayCat'), price: 196000, type: 'M' },
+                    { maHieu: 'AF.41110', name: 'Bê tông Bể Tự Hoại', unit: 'm³', quantity: v_bt_bth, price: 1530000, type: 'VL' },
                 ];
             }
         };
@@ -1247,16 +1285,16 @@
                 }
 
                 return [
-                    { maHieu: 'AB.21120', name: 'Đào đất tầng hầm', unit: 'm³', quantity: v_dao, price: 26000 },
-                    { maHieu: 'AF.41110', name: 'Bê tông đài móng', unit: 'm³', quantity: v_bt_mong, price: 1360000 },
-                    { maHieu: 'AF.43110', name: 'Bê tông giằng móng/dầm bè', unit: 'm³', quantity: v_bt_giang, price: 1445000 },
-                    { maHieu: 'AF.42110', name: 'Bê tông vách hầm', unit: 'm³', quantity: v_bt_wall, price: 1500000 },
-                    { maHieu: 'AF.42120', name: 'Bê tông sàn đáy hầm', unit: 'm³', quantity: v_bt_floor, price: 1500000 },
-                    { maHieu: 'AF.42130', name: 'Bê tông bể nước ngầm', unit: 'm³', quantity: v_bt_tank, price: 1580000 },
-                    { maHieu: 'AF.31110', name: 'Cốt thép móng/giằng', unit: 'tấn', quantity: (kg_thep_mong+kg_thep_giang)/1000, price: 18000000 },
-                    { maHieu: 'AF.32110', name: 'Cốt thép vách/sàn hầm', unit: 'tấn', quantity: (kg_thep_wall+kg_thep_floor)/1000, price: 17800000 },
-                    { maHieu: 'AF.32130', name: 'Cốt thép bể ngầm', unit: 'tấn', quantity: kg_thep_tank/1000, price: 18500000 },
-                    { maHieu: 'AG.51110', name: 'Chống thấm vách hầm', unit: 'm²', quantity: a_wall_vert, price: 120000 }
+                    { maHieu: 'AB.21120', name: 'Đào đất tầng hầm', unit: 'm³', quantity: v_dao, price: 26000, type: 'M' },
+                    { maHieu: 'AF.41110', name: 'Bê tông đài móng', unit: 'm³', quantity: v_bt_mong, price: 1360000, type: 'VL' },
+                    { maHieu: 'AF.43110', name: 'Bê tông giằng móng/dầm bè', unit: 'm³', quantity: v_bt_giang, price: 1445000, type: 'VL' },
+                    { maHieu: 'AF.42110', name: 'Bê tông vách hầm', unit: 'm³', quantity: v_bt_wall, price: 1500000, type: 'VL' },
+                    { maHieu: 'AF.42120', name: 'Bê tông sàn đáy hầm', unit: 'm³', quantity: v_bt_floor, price: 1500000, type: 'VL' },
+                    { maHieu: 'AF.42130', name: 'Bê tông bể nước ngầm', unit: 'm³', quantity: v_bt_tank, price: 1580000, type: 'VL' },
+                    { maHieu: 'AF.31110', name: 'Cốt thép móng/giằng', unit: 'tấn', quantity: (kg_thep_mong+kg_thep_giang)/1000, price: 18000000, type: 'VL' },
+                    { maHieu: 'AF.32110', name: 'Cốt thép vách/sàn hầm', unit: 'tấn', quantity: (kg_thep_wall+kg_thep_floor)/1000, price: 17800000, type: 'VL' },
+                    { maHieu: 'AF.32130', name: 'Cốt thép bể ngầm', unit: 'tấn', quantity: kg_thep_tank/1000, price: 18500000, type: 'VL' },
+                    { maHieu: 'AG.51110', name: 'Chống thấm vách hầm', unit: 'm²', quantity: a_wall_vert, price: 120000, type: 'NC' }
                 ];
             }
         };
@@ -1490,6 +1528,19 @@
                             </div>
                         </div>
 
+                        <!-- 3.3 Công Tác Hoàn Thiện Khác & ME -->
+                        <div class="input-box mb-6">
+                            <h4 class="text-lg font-semibold text-primary-dark mb-4">3.3 Sơn Bả, Trần & Điện Nước (ME)</h4>
+                            <div class="form-grid-layout max-w-3xl">
+                                <label for="son_heSo" class="form-grid-label">Hệ số diện tích Sơn / Tường</label>
+                                <div class="form-grid-input"><input type="number" id="son_heSo" class="form-input" value="1.0" step="0.01"></div>
+                                <label for="tran_thachCao_dienTich" class="form-grid-label">Diện tích trần thạch cao (m²)</label>
+                                <div class="form-grid-input"><input type="number" id="tran_thachCao_dienTich" class="form-input" placeholder="Tự động tính" step="0.1"></div>
+                                <label for="me_donGia" class="form-grid-label">Suất vốn Điện Nước (VNĐ/m²)</label>
+                                <div class="form-grid-input"><input type="number" id="me_donGia" class="form-input" value="1500000" step="50000"></div>
+                            </div>
+                        </div>
+
                     </section>
                 </div>
             `;
@@ -1583,6 +1634,11 @@
                 setValue('vs_soLuong', Math.ceil(area / 50));
                 setValue('vs_dai', 2.0); setValue('vs_rong', 2.0); setValue('canNen_day', 0.05);
 
+                // Finishings
+                setValue('son_heSo', 1.0);
+                setValue('tran_thachCao_dienTich', area); // Default to floor area
+                setValue('me_donGia', 1500000);
+
                 // Scenario Specifics
                 const scenario = houseScenarioSelect.value;
                 const damCao = floors <= 3 ? 0.3 : 0.4;
@@ -1654,7 +1710,8 @@
                     san_phi: getVal('san_thep_phi'), san_a: getVal('san_thep_a'),
 
                     vs_N: getVal('vs_soLuong'), vs_L: getVal('vs_dai'), vs_R: getVal('vs_rong'), vs_H: getVal('vs_caoOp'),
-                    opLat_k: getVal('opLat_heSo'), canNen_day: getVal('canNen_day')
+                    opLat_k: getVal('opLat_heSo'), canNen_day: getVal('canNen_day'),
+                    son_k: getVal('son_heSo'), tran_A: getVal('tran_thachCao_dienTich'), me_Gia: getVal('me_donGia')
                 };
 
                 // Calc Cot
@@ -1696,19 +1753,30 @@
                 const a_op = area * i.opLat_k;
                 const a_op_vs = i.vs_N * 2 * (i.vs_L + i.vs_R) * i.vs_H * i.opLat_k;
 
+                // New Professional Items
+                const a_son = a_to * i.son_k;
+                // Cua: Assume average price per m2 for input area
+                const val_cua = i.cua_A * 2500000; // 2.5tr/m2 TB
+                // ME
+                const val_me = area * i.me_Gia;
+
                 return [
-                    { maHieu: 'AC.41110', name: 'Bê tông cột T1', unit: 'm³', quantity: v_bt_cot, price: 1445000 },
-                    { maHieu: 'AC.31110', name: 'Thép cột T1', unit: 'tấn', quantity: kg_thep_cot/1000, price: 18000000 },
-                    { maHieu: 'AE.21110', name: 'Xây tường T1', unit: 'm³', quantity: v_tuong, price: 920000 },
-                    { maHieu: 'AE.41110', name: 'Bê tông giằng tường/lanh tô T1', unit: 'm³', quantity: v_bt_gt, price: 1360000 },
-                    { maHieu: 'AE.31110', name: 'Thép giằng tường/lanh tô T1', unit: 'tấn', quantity: kg_thep_gt/1000, price: 18000000 },
-                    { maHieu: 'AD.41110', name: 'Bê tông dầm sàn T2/Mái', unit: 'm³', quantity: v_bt_dam + v_bt_san, price: 1445000 },
-                    { maHieu: 'AD.31110', name: 'Thép dầm sàn T2/Mái', unit: 'tấn', quantity: (kg_thep_dam + kg_thep_san)/1000, price: 17500000 },
-                    { maHieu: 'AG.11110', name: 'Trát tường T1', unit: 'm²', quantity: a_to, price: 35000 },
-                    { maHieu: 'AG.31110', name: 'Cán nền T1', unit: 'm³', quantity: v_can, price: 750000 },
-                    { maHieu: 'AK.11110', name: 'Lát nền T1', unit: 'm²', quantity: a_op, price: 120000 },
-                    { maHieu: 'AK.21110', name: 'Ốp tường WC T1', unit: 'm²', quantity: a_op_vs, price: 130000 },
-                    { maHieu: 'CA.13110', name: 'Lợp mái tôn (nếu có)', unit: 'm²', quantity: a_mai_ton, price: 110000 },
+                    { maHieu: 'AC.41110', name: 'Bê tông cột T1', unit: 'm³', quantity: v_bt_cot, price: 1445000, type: 'VL' },
+                    { maHieu: 'AC.31110', name: 'Thép cột T1', unit: 'tấn', quantity: kg_thep_cot/1000, price: 18000000, type: 'VL' },
+                    { maHieu: 'AE.21110', name: 'Xây tường T1', unit: 'm³', quantity: v_tuong, price: 920000, type: 'VL' },
+                    { maHieu: 'AE.41110', name: 'Bê tông giằng tường/lanh tô T1', unit: 'm³', quantity: v_bt_gt, price: 1360000, type: 'VL' },
+                    { maHieu: 'AE.31110', name: 'Thép giằng tường/lanh tô T1', unit: 'tấn', quantity: kg_thep_gt/1000, price: 18000000, type: 'VL' },
+                    { maHieu: 'AD.41110', name: 'Bê tông dầm sàn T2/Mái', unit: 'm³', quantity: v_bt_dam + v_bt_san, price: 1445000, type: 'VL' },
+                    { maHieu: 'AD.31110', name: 'Thép dầm sàn T2/Mái', unit: 'tấn', quantity: (kg_thep_dam + kg_thep_san)/1000, price: 17500000, type: 'VL' },
+                    { maHieu: 'AG.11110', name: 'Trát tường T1', unit: 'm²', quantity: a_to, price: 35000, type: 'NC' },
+                    { maHieu: 'AG.31110', name: 'Cán nền T1', unit: 'm³', quantity: v_can, price: 750000, type: 'VL' },
+                    { maHieu: 'AK.11110', name: 'Lát nền T1', unit: 'm²', quantity: a_op, price: 120000, type: 'NC' },
+                    { maHieu: 'AK.21110', name: 'Ốp tường WC T1', unit: 'm²', quantity: a_op_vs, price: 130000, type: 'NC' },
+                    { maHieu: 'AK.31110', name: 'Sơn bả tường T1', unit: 'm²', quantity: a_son, price: 65000, type: 'NC' },
+                    { maHieu: 'AK.41110', name: 'Trần thạch cao T1', unit: 'm²', quantity: i.tran_A, price: 140000, type: 'VL' },
+                    { maHieu: 'AI.11110', name: 'Cửa đi, cửa sổ T1 (Nhôm kính/Gỗ)', unit: 'm²', quantity: i.cua_A, price: 2500000, type: 'VL' },
+                    { maHieu: 'BA.11110', name: 'Hệ thống Điện Nước T1', unit: 'HT', quantity: 1, price: val_me, type: 'VL' },
+                    { maHieu: 'CA.13110', name: 'Lợp mái tôn (nếu có)', unit: 'm²', quantity: a_mai_ton, price: 110000, type: 'VL' },
                 ];
             }
         };
@@ -1838,6 +1906,19 @@
                                 <div class="form-grid-input"><input type="number" id="${p}vs_caoOp" class="form-input" value="2.4" step="0.1"></div>
                             </div>
                         </div>
+
+                        <!-- 3.3 Công Tác Hoàn Thiện Khác & ME -->
+                        <div class="input-box mb-6">
+                            <h4 class="text-lg font-semibold text-primary-dark mb-4">3.3 Sơn Bả, Trần & Điện Nước (ME)</h4>
+                            <div class="form-grid-layout max-w-3xl">
+                                <label for="${p}son_heSo" class="form-grid-label">Hệ số diện tích Sơn / Tường</label>
+                                <div class="form-grid-input"><input type="number" id="${p}son_heSo" class="form-input" value="1.0" step="0.01"></div>
+                                <label for="${p}tran_thachCao_dienTich" class="form-grid-label">Diện tích trần thạch cao (m²)</label>
+                                <div class="form-grid-input"><input type="number" id="${p}tran_thachCao_dienTich" class="form-input" placeholder="Tự động tính" step="0.1"></div>
+                                <label for="${p}me_donGia" class="form-grid-label">Suất vốn Điện Nước (VNĐ/m²)</label>
+                                <div class="form-grid-input"><input type="number" id="${p}me_donGia" class="form-input" value="1500000" step="50000"></div>
+                            </div>
+                        </div>
                     </section>
                 </div>
             `;
@@ -1905,6 +1986,10 @@
 
                 setValue(`${p}vs_soLuong`, Math.ceil(area / 40));
                 setValue(`${p}vs_dai`, 2.0); setValue(`${p}vs_rong`, 2.0);
+
+                setValue(`${p}son_heSo`, 1.0);
+                setValue(`${p}tran_thachCao_dienTich`, area);
+                setValue(`${p}me_donGia`, 1500000);
             },
 
             calculate: function(floorIndex) {
@@ -1926,6 +2011,8 @@
 
                     dam_sl: getVal(`${p}dam_thep_soluong`), dam_phi: getVal(`${p}dam_thep_phi`),
                     san_phi: getVal(`${p}san_thep_phi`), san_a: getVal(`${p}san_thep_a`),
+
+                    son_k: getVal(`${p}son_heSo`), tran_A: getVal(`${p}tran_thachCao_dienTich`), me_Gia: getVal(`${p}me_donGia`)
                 };
 
                 const v_bt_cot = i.cot_N * i.cot_dai * i.cot_rong * i.cot_cao;
@@ -1941,16 +2028,23 @@
                 const v_can = area * 0.05;
                 const a_op = area;
                 const a_to = (i.tuong_L + i.tuong_ngan_L) * i.tuong_H * 2 - i.cua_A*2;
+                const a_son = a_to * i.son_k;
+                const val_me = area * i.me_Gia;
+                const val_cua = i.cua_A * 2500000;
 
                 return [
-                    { maHieu: 'AC.41110', name: `Bê tông cột T${floorIndex}`, unit: 'm³', quantity: v_bt_cot, price: 1445000 },
-                    { maHieu: 'AC.31110', name: `Thép cột T${floorIndex}`, unit: 'tấn', quantity: kg_thep_cot/1000, price: 18000000 },
-                    { maHieu: 'AE.21110', name: `Xây tường T${floorIndex}`, unit: 'm³', quantity: v_tuong, price: 920000 },
-                    { maHieu: 'AD.41110', name: `Bê tông dầm sàn T${floorIndex+1}`, unit: 'm³', quantity: v_bt_dam + v_bt_san, price: 1445000 },
-                    { maHieu: 'AD.31110', name: `Thép dầm sàn T${floorIndex+1}`, unit: 'tấn', quantity: (kg_thep_dam + kg_thep_san)/1000, price: 17500000 },
-                    { maHieu: 'AG.11110', name: `Trát tường T${floorIndex}`, unit: 'm²', quantity: a_to, price: 35000 },
-                    { maHieu: 'AG.31110', name: `Cán nền T${floorIndex}`, unit: 'm³', quantity: v_can, price: 750000 },
-                    { maHieu: 'AK.11110', name: `Lát nền T${floorIndex}`, unit: 'm²', quantity: a_op, price: 120000 },
+                    { maHieu: 'AC.41110', name: `Bê tông cột T${floorIndex}`, unit: 'm³', quantity: v_bt_cot, price: 1445000, type: 'VL' },
+                    { maHieu: 'AC.31110', name: `Thép cột T${floorIndex}`, unit: 'tấn', quantity: kg_thep_cot/1000, price: 18000000, type: 'VL' },
+                    { maHieu: 'AE.21110', name: `Xây tường T${floorIndex}`, unit: 'm³', quantity: v_tuong, price: 920000, type: 'VL' },
+                    { maHieu: 'AD.41110', name: `Bê tông dầm sàn T${floorIndex+1}`, unit: 'm³', quantity: v_bt_dam + v_bt_san, price: 1445000, type: 'VL' },
+                    { maHieu: 'AD.31110', name: `Thép dầm sàn T${floorIndex+1}`, unit: 'tấn', quantity: (kg_thep_dam + kg_thep_san)/1000, price: 17500000, type: 'VL' },
+                    { maHieu: 'AG.11110', name: `Trát tường T${floorIndex}`, unit: 'm²', quantity: a_to, price: 35000, type: 'NC' },
+                    { maHieu: 'AG.31110', name: `Cán nền T${floorIndex}`, unit: 'm³', quantity: v_can, price: 750000, type: 'VL' },
+                    { maHieu: 'AK.11110', name: `Lát nền T${floorIndex}`, unit: 'm²', quantity: a_op, price: 120000, type: 'NC' },
+                    { maHieu: 'AK.31110', name: `Sơn bả tường T${floorIndex}`, unit: 'm²', quantity: a_son, price: 65000, type: 'NC' },
+                    { maHieu: 'AK.41110', name: `Trần thạch cao T${floorIndex}`, unit: 'm²', quantity: i.tran_A, price: 140000, type: 'VL' },
+                    { maHieu: 'AI.11110', name: `Cửa đi, cửa sổ T${floorIndex}`, unit: 'm²', quantity: i.cua_A, price: 2500000, type: 'VL' },
+                    { maHieu: 'BA.11110', name: `Hệ thống Điện Nước T${floorIndex}`, unit: 'HT', quantity: 1, price: val_me, type: 'VL' },
                 ];
             }
         };
@@ -2097,25 +2191,25 @@
                     const am_cot = getVal('apMai_cot_soLuong');
                     const am_tuong = getVal('apMai_tongDaiTuong200') + getVal('apMai_tongDaiTuong100');
 
-                    results.push({ maHieu: 'AC.41110', name: 'Bê tông cột Áp Mái', unit: 'm³', quantity: am_cot * 0.2 * 0.2 * am_cao, price: 1445000 });
-                    results.push({ maHieu: 'AE.21110', name: 'Xây tường Áp Mái', unit: 'm³', quantity: am_tuong * am_cao * 0.15, price: 920000 });
-                    results.push({ maHieu: 'AD.41110', name: 'Bê tông sàn Áp Mái', unit: 'm³', quantity: am_dt * 0.1, price: 1445000 });
+                    results.push({ maHieu: 'AC.41110', name: 'Bê tông cột Áp Mái', unit: 'm³', quantity: am_cot * 0.2 * 0.2 * am_cao, price: 1445000, type: 'VL' });
+                    results.push({ maHieu: 'AE.21110', name: 'Xây tường Áp Mái', unit: 'm³', quantity: am_tuong * am_cao * 0.15, price: 920000, type: 'VL' });
+                    results.push({ maHieu: 'AD.41110', name: 'Bê tông sàn Áp Mái', unit: 'm³', quantity: am_dt * 0.1, price: 1445000, type: 'VL' });
                 }
 
                 // Roof Structure
                 if (scenario === 'flat-roof-btct') {
                      const v_bt_mai = area * getVal('r_flat_san_day');
                      const a_chongtham = area * getVal('r_flat_chongTham_heSo');
-                     results.push({ maHieu: 'AD.41110', name: 'Bê tông sàn Mái', unit: 'm³', quantity: v_bt_mai, price: 1445000 });
-                     results.push({ maHieu: 'AG.51110', name: 'Chống thấm Mái', unit: 'm²', quantity: a_chongtham, price: 75000 });
+                     results.push({ maHieu: 'AD.41110', name: 'Bê tông sàn Mái', unit: 'm³', quantity: v_bt_mai, price: 1445000, type: 'VL' });
+                     results.push({ maHieu: 'AG.51110', name: 'Chống thấm Mái', unit: 'm²', quantity: a_chongtham, price: 75000, type: 'NC' });
                 } else if (scenario === 'sloped-roof-btct-tile') {
                      const v_bt_mai = area * 0.12 * 1.2; // Sloped area > plan area
-                     results.push({ maHieu: 'AD.41110', name: 'Bê tông Mái Dốc', unit: 'm³', quantity: v_bt_mai, price: 1445000 });
-                     results.push({ maHieu: 'CA.13110', name: 'Lợp Ngói Mái', unit: 'm²', quantity: area * getVal('r_sloped_dtLopNgua'), price: 90000 });
+                     results.push({ maHieu: 'AD.41110', name: 'Bê tông Mái Dốc', unit: 'm³', quantity: v_bt_mai, price: 1445000, type: 'VL' });
+                     results.push({ maHieu: 'CA.13110', name: 'Lợp Ngói Mái', unit: 'm²', quantity: area * getVal('r_sloped_dtLopNgua'), price: 90000, type: 'NC' });
                 } else if (scenario === 'steel-roof-tile') {
                      const kg_thep = getVal('r_steel_maiTon_dienTich') * getVal('r_steel_xaGo_tietDien');
-                     results.push({ maHieu: 'CA.11110', name: 'Kết cấu thép Mái Tôn', unit: 'tấn', quantity: kg_thep/1000, price: 16000000 });
-                     results.push({ maHieu: 'CA.13110', name: 'Lợp Mái Tôn', unit: 'm²', quantity: getVal('r_steel_maiTon_dienTich'), price: 110000 });
+                     results.push({ maHieu: 'CA.11110', name: 'Kết cấu thép Mái Tôn', unit: 'tấn', quantity: kg_thep/1000, price: 16000000, type: 'VL' });
+                     results.push({ maHieu: 'CA.13110', name: 'Lợp Mái Tôn', unit: 'm²', quantity: getVal('r_steel_maiTon_dienTich'), price: 110000, type: 'NC' });
                 }
 
                 return results;
@@ -2161,33 +2255,27 @@
             renderResults(finalItems);
         }
 
+        let myCostChart = null;
+
         function renderResults(items) {
             const table = document.getElementById('step3-container');
             table.classList.remove('hidden');
             table.scrollIntoView({ behavior: 'smooth' });
 
             const resultArea = document.getElementById('finalResultArea');
-            let html = `
-                <table class="result-table">
-                    <thead>
-                        <tr>
-                            <th>STT</th>
-                            <th>Mã Hiệu</th>
-                            <th>Tên Công Việc</th>
-                            <th>Đơn Vị</th>
-                            <th>Khối Lượng</th>
-                            <th>Đơn Giá</th>
-                            <th>Thành Tiền</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
 
-            let total = 0;
+            // 1. Calculate VL, NC, M
+            let totalVL = 0, totalNC = 0, totalM = 0;
+            let rowsHTML = '';
+
             items.forEach((item, index) => {
                 const tt = item.quantity * item.price;
-                total += tt;
-                html += `
+                if (item.type === 'VL') totalVL += tt;
+                else if (item.type === 'NC') totalNC += tt;
+                else if (item.type === 'M') totalM += tt;
+                else totalVL += tt; // Default to VL if unknown
+
+                rowsHTML += `
                     <tr>
                         <td>${index + 1}</td>
                         <td>${item.maHieu}</td>
@@ -2200,18 +2288,130 @@
                 `;
             });
 
+            // 2. Summary Logic
+            const k_c = getVal('cfg_chiPhiChung') / 100;
+            const k_tl = getVal('cfg_thuNhapChiuThue') / 100;
+            const k_vat = getVal('cfg_vat') / 100;
+            const k_dp = getVal('cfg_duPhong') / 100;
+
+            const T = totalVL + totalNC + totalM;
+            const C = T * k_c;
+            const TL = (T + C) * k_tl;
+            const G = T + C + TL;
+            const VAT = G * k_vat;
+            const G_xd = G + VAT;
+            const DP = G_xd * k_dp;
+            const G_all = G_xd + DP;
+
+            // 3. Render Detail Table
+            let html = `
+                <h3 class="text-xl font-semibold text-primary mb-2">1. Bảng Tiên Lượng Chi Tiết</h3>
+                <table class="result-table mb-8">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã Hiệu</th>
+                            <th>Tên Công Việc</th>
+                            <th>Đơn Vị</th>
+                            <th>Khối Lượng</th>
+                            <th>Đơn Giá</th>
+                            <th>Thành Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHTML}
+                        <tr class="font-bold bg-gray-100">
+                            <td colspan="6" class="text-right">Tổng Vật Liệu</td>
+                            <td>${formatCurrency(totalVL)}</td>
+                        </tr>
+                        <tr class="font-bold bg-gray-100">
+                            <td colspan="6" class="text-right">Tổng Nhân Công</td>
+                            <td>${formatCurrency(totalNC)}</td>
+                        </tr>
+                        <tr class="font-bold bg-gray-100">
+                            <td colspan="6" class="text-right">Tổng Máy Thi Công</td>
+                            <td>${formatCurrency(totalM)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+
+            // 4. Render Summary Table
             html += `
-                    <tr class="font-bold text-lg bg-yellow-50">
-                        <td colspan="6" class="text-right">TỔNG CỘNG</td>
-                        <td class="text-primary">${formatCurrency(total)}</td>
-                    </tr>
+                <h3 class="text-xl font-semibold text-primary mb-2">2. Bảng Tổng Hợp Kinh Phí (Professional)</h3>
+                <table class="result-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Khoản Mục Chi Phí</th>
+                            <th>Cách Tính</th>
+                            <th>Thành Tiền (VNĐ)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="font-semibold"><td>I</td><td>Chi phí trực tiếp (T)</td><td>VL + NC + M</td><td>${formatCurrency(T)}</td></tr>
+                        <tr><td>1</td><td>Chi phí vật liệu (VL)</td><td>Sum(VL)</td><td>${formatCurrency(totalVL)}</td></tr>
+                        <tr><td>2</td><td>Chi phí nhân công (NC)</td><td>Sum(NC)</td><td>${formatCurrency(totalNC)}</td></tr>
+                        <tr><td>3</td><td>Chi phí máy thi công (M)</td><td>Sum(M)</td><td>${formatCurrency(totalM)}</td></tr>
+
+                        <tr class="font-semibold"><td>II</td><td>Chi phí chung (C)</td><td>T x ${getVal('cfg_chiPhiChung')}%</td><td>${formatCurrency(C)}</td></tr>
+                        <tr class="font-semibold"><td>III</td><td>Thu nhập chịu thuế tính trước (TL)</td><td>(T + C) x ${getVal('cfg_thuNhapChiuThue')}%</td><td>${formatCurrency(TL)}</td></tr>
+                        <tr class="font-bold bg-blue-50"><td>IV</td><td>Chi phí xây dựng trước thuế (G)</td><td>T + C + TL</td><td>${formatCurrency(G)}</td></tr>
+
+                        <tr class="font-semibold"><td>V</td><td>Thuế giá trị gia tăng (VAT)</td><td>G x ${getVal('cfg_vat')}%</td><td>${formatCurrency(VAT)}</td></tr>
+                        <tr class="font-bold bg-blue-100"><td>VI</td><td>Chi phí xây dựng sau thuế (Gxd)</td><td>G + VAT</td><td>${formatCurrency(G_xd)}</td></tr>
+
+                        <tr class="font-semibold"><td>VII</td><td>Chi phí dự phòng (DP)</td><td>Gxd x ${getVal('cfg_duPhong')}%</td><td>${formatCurrency(DP)}</td></tr>
+
+                        <tr class="font-extrabold text-lg text-white bg-primary"><td></td><td>TỔNG CỘNG (Gall)</td><td>Gxd + DP</td><td>${formatCurrency(G_all)}</td></tr>
                     </tbody>
                 </table>
             `;
 
             resultArea.innerHTML = html;
-            document.getElementById('tempTotalCost').textContent = formatCurrency(total);
+            document.getElementById('tempTotalCost').textContent = formatCurrency(G_all);
+
+            // 5. Update Chart
+            updateChart(totalVL, totalNC, totalM, C + TL + VAT + DP);
         }
+
+        function updateChart(vl, nc, m, other) {
+            const ctx = document.getElementById('costChart').getContext('2d');
+
+            if (myCostChart) {
+                myCostChart.destroy();
+            }
+
+            myCostChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Vật Liệu', 'Nhân Công', 'Máy', 'Chi Phí Khác (Thuế, QL...)'],
+                    datasets: [{
+                        data: [vl, nc, m, other],
+                        backgroundColor: [
+                            '#3b82f6', // blue-500
+                            '#f59e0b', // amber-500
+                            '#ef4444', // red-500
+                            '#10b981'  // emerald-500
+                        ],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+
+        // Re-calc summary button
+        document.getElementById('recalcSummaryBtn').addEventListener('click', () => {
+            calculateAll();
+        });
 
         // --- EXPORT & PRINT HANDLERS ---
         document.getElementById('printReportBtn').addEventListener('click', () => window.print());
