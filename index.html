@@ -191,42 +191,77 @@
         <div id="step3-container" class="hidden container-card mt-8 mb-24">
             <h2 class="text-2xl font-bold text-primary mb-6 border-l-4 border-accent pl-4">Kết Quả Dự Toán Chi Tiết</h2>
 
-            <!-- Dashboard & Settings -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <!-- Chart -->
-                <div class="bg-section-bg p-4 rounded-xl border border-gray-200 flex flex-col items-center">
-                    <h3 class="text-lg font-bold text-gray-700 mb-4">Biểu Đồ Cơ Cấu Chi Phí</h3>
-                    <div class="w-full max-w-xs">
-                        <canvas id="costChart"></canvas>
-                    </div>
-                </div>
+            <!-- Result Tabs Navigation -->
+            <div class="mb-6 border-b border-gray-200">
+                <nav class="flex space-x-4" aria-label="Tabs">
+                    <button onclick="switchResultTab('estimate')" id="btn-tab-estimate" class="result-tab-btn active bg-gray-100 text-primary px-3 py-2 font-medium text-sm rounded-md">
+                        1. Bảng Tiên Lượng Chi Tiết
+                    </button>
+                    <button onclick="switchResultTab('bid')" id="btn-tab-bid" class="result-tab-btn text-gray-500 hover:text-gray-700 px-3 py-2 font-medium text-sm rounded-md">
+                        2. Bảng Dự Thầu
+                    </button>
+                    <button onclick="switchResultTab('summary')" id="btn-tab-summary" class="result-tab-btn text-gray-500 hover:text-gray-700 px-3 py-2 font-medium text-sm rounded-md">
+                        3. Tổng Hợp Kinh Phí
+                    </button>
+                    <button onclick="switchResultTab('dashboard')" id="btn-tab-dashboard" class="result-tab-btn text-gray-500 hover:text-gray-700 px-3 py-2 font-medium text-sm rounded-md">
+                        4. Dashboard & Cấu Hình
+                    </button>
+                </nav>
+            </div>
 
-                <!-- Settings -->
-                <div class="bg-section-bg p-6 rounded-xl border border-gray-200">
-                    <h3 class="text-lg font-bold text-gray-700 mb-4">Tham Số Tổng Hợp Kinh Phí</h3>
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4 items-center">
-                            <label class="text-sm font-medium text-gray-600">Chi phí chung (C) (%)</label>
-                            <input type="number" id="cfg_chiPhiChung" class="form-input text-right" value="5.0" step="0.1">
+            <!-- TAB 1: ESTIMATE DETAIL -->
+            <div id="result-content-estimate" class="result-tab-content block">
+                <div id="estimateTableContainer" class="overflow-x-auto"></div>
+            </div>
+
+            <!-- TAB 2: BID TABLE -->
+            <div id="result-content-bid" class="result-tab-content hidden">
+                 <div id="bidTableContainer" class="overflow-x-auto"></div>
+            </div>
+
+            <!-- TAB 3: SUMMARY -->
+            <div id="result-content-summary" class="result-tab-content hidden">
+                <div id="summaryTableContainer" class="overflow-x-auto"></div>
+            </div>
+
+            <!-- TAB 4: DASHBOARD -->
+            <div id="result-content-dashboard" class="result-tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- Chart -->
+                    <div class="bg-section-bg p-4 rounded-xl border border-gray-200 flex flex-col items-center">
+                        <h3 class="text-lg font-bold text-gray-700 mb-4">Biểu Đồ Cơ Cấu Chi Phí</h3>
+                        <div class="w-full max-w-xs">
+                            <canvas id="costChart"></canvas>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 items-center">
-                            <label class="text-sm font-medium text-gray-600">Thu nhập chịu thuế tính trước (TL) (%)</label>
-                            <input type="number" id="cfg_thuNhapChiuThue" class="form-input text-right" value="5.5" step="0.1">
+                    </div>
+
+                    <!-- Settings -->
+                    <div class="bg-section-bg p-6 rounded-xl border border-gray-200">
+                        <h3 class="text-lg font-bold text-gray-700 mb-4">Tham Số Tổng Hợp Kinh Phí</h3>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4 items-center">
+                                <label class="text-sm font-medium text-gray-600">Chi phí chung (C) (%)</label>
+                                <input type="number" id="cfg_chiPhiChung" class="form-input text-right" value="5.0" step="0.1">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 items-center">
+                                <label class="text-sm font-medium text-gray-600">Thu nhập chịu thuế tính trước (TL) (%)</label>
+                                <input type="number" id="cfg_thuNhapChiuThue" class="form-input text-right" value="5.5" step="0.1">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 items-center">
+                                <label class="text-sm font-medium text-gray-600">Thuế GTGT (VAT) (%)</label>
+                                <input type="number" id="cfg_vat" class="form-input text-right" value="8.0" step="1">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 items-center">
+                                <label class="text-sm font-medium text-gray-600">Chi phí dự phòng (%)</label>
+                                <input type="number" id="cfg_duPhong" class="form-input text-right" value="5.0" step="1">
+                            </div>
+                            <button id="recalcSummaryBtn" class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-2 rounded mt-2">Cập nhật Bảng Tổng Hợp</button>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 items-center">
-                            <label class="text-sm font-medium text-gray-600">Thuế GTGT (VAT) (%)</label>
-                            <input type="number" id="cfg_vat" class="form-input text-right" value="8.0" step="1">
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 items-center">
-                            <label class="text-sm font-medium text-gray-600">Chi phí dự phòng (%)</label>
-                            <input type="number" id="cfg_duPhong" class="form-input text-right" value="5.0" step="1">
-                        </div>
-                        <button id="recalcSummaryBtn" class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-2 rounded mt-2">Cập nhật Bảng Tổng Hợp</button>
                     </div>
                 </div>
             </div>
 
-            <div class="flex gap-4 mb-6 print-hide">
+            <div class="flex gap-4 mt-8 print-hide">
                 <button id="exportExcelBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center">
                     Xuất Excel
                 </button>
@@ -236,9 +271,6 @@
                 <button id="bidProfileBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center">
                     Tạo Hồ Sơ Dự Thầu
                 </button>
-            </div>
-            <div id="finalResultArea" class="overflow-x-auto">
-                <!-- Result Table -->
             </div>
         </div>
 
@@ -944,20 +976,37 @@
                 }
 
                 // --- BUILD RESULT ITEMS ---
-                // We return a list of items compatible with the Results Table
+                // Groups: I. CHUẨN BỊ, II. ĐẤT, III. MÓNG, IV. CỔ MÓNG, V. GIẰNG MÓNG (Similar to image)
+
                 return [
-                    { maHieu: 'AF.11110', name: 'Bê tông lót móng', unit: 'm³', quantity: v_bt_lot, price: 1020000, type: 'VL' },
-                    { maHieu: 'AF.41110', name: 'Bê tông móng', unit: 'm³', quantity: v_bt_mong, price: 1360000, type: 'VL' },
-                    { maHieu: 'AF.42110', name: 'Bê tông cổ móng', unit: 'm³', quantity: v_bt_co, price: 1445000, type: 'VL' },
-                    { maHieu: 'AF.43110', name: 'Bê tông giằng móng', unit: 'm³', quantity: v_bt_giang, price: 1445000, type: 'VL' },
-                    { maHieu: 'AF.43110', name: 'Bê tông giằng bó nền', unit: 'm³', quantity: v_bt_bonen, price: 1445000, type: 'VL' },
-                    { maHieu: 'AF.31110', name: 'Cốt thép móng', unit: 'tấn', quantity: kl_thepMong_kg/1000, price: 18000000, type: 'VL' },
-                    { maHieu: 'AF.32110', name: 'Cốt thép cổ móng', unit: 'tấn', quantity: kl_thepCo_kg/1000, price: 18000000, type: 'VL' },
-                    { maHieu: 'AF.33110', name: 'Cốt thép giằng móng', unit: 'tấn', quantity: kl_thepGiang_kg/1000, price: 18000000, type: 'VL' },
-                    { maHieu: 'AF.33110', name: 'Cốt thép giằng bó nền', unit: 'tấn', quantity: kl_thepBoNen_kg/1000, price: 18000000, type: 'VL' },
-                    { maHieu: 'AE.21110', name: 'Xây tường móng', unit: 'm³', quantity: i.tm_tongDai * i.tm_cao * i.tm_day, price: 910000, type: 'VL' },
-                    { maHieu: 'AB.61110', name: 'Lấp cát nền', unit: 'm³', quantity: area * getVal('nen_dayCat'), price: 196000, type: 'M' },
-                    { maHieu: 'AF.41110', name: 'Bê tông Bể Tự Hoại', unit: 'm³', quantity: v_bt_bth, price: 1530000, type: 'VL' },
+                    // I. CÔNG TÁC CHUẨN BỊ
+                    { group: 'I. CÔNG TÁC CHUẨN BỊ', maHieu: 'AA.11010', name: 'Công tác định vị tim, mốc, cốt công trình', unit: 'Gói', quantity: 1, priceVL: 0, priceNC: 2000000, priceM: 0 },
+                    { group: 'I. CÔNG TÁC CHUẨN BỊ', maHieu: 'AA.61010', name: 'Lán trại tạm, nhà kho, văn phòng tại công trường', unit: 'm²', quantity: getVal('dienTichLanTrai'), priceVL: 270000, priceNC: 180000, priceM: 0 },
+
+                    // II. CÔNG TÁC ĐẤT
+                    { group: 'II. CÔNG TÁC ĐẤT', maHieu: 'AB.21120', name: 'Đào đất hố móng (thủ công/cơ giới)', unit: 'm³', quantity: (v_bt_mong + v_bt_giang + v_bt_bth)*1.3, priceVL: 0, priceNC: 120000, priceM: 32500 }, // Approx quantity logic
+                    { group: 'II. CÔNG TÁC ĐẤT', maHieu: 'AB.61110', name: 'Lấp cát nền', unit: 'm³', quantity: area * getVal('nen_dayCat'), priceVL: 160000, priceNC: 36000, priceM: 0 },
+
+                    // III. CÔNG TÁC MÓNG (BẢN MÓNG)
+                    { group: 'III. CÔNG TÁC MÓNG (BẢN MÓNG)', maHieu: 'AF.11110', name: 'Bê tông lót móng M100', unit: 'm³', quantity: v_bt_lot, priceVL: 1020000, priceNC: 180000, priceM: 0 },
+                    { group: 'III. CÔNG TÁC MÓNG (BẢN MÓNG)', maHieu: 'AF.21110', name: 'Sản xuất, lắp dựng ván khuôn móng', unit: '100 m²', quantity: v_bt_mong * 0.6 / 100, priceVL: 7500000, priceNC: 7500000, priceM: 0 }, // Approx VK area
+                    { group: 'III. CÔNG TÁC MÓNG (BẢN MÓNG)', maHieu: 'AF.31110', name: 'Sản xuất, lắp dựng cốt thép móng', unit: 'tấn', quantity: kl_thepMong_kg/1000, priceVL: 18000000, priceNC: 3500000, priceM: 0 },
+                    { group: 'III. CÔNG TÁC MÓNG (BẢN MÓNG)', maHieu: 'AF.41110', name: 'Bê tông móng M250', unit: 'm³', quantity: v_bt_mong, priceVL: 1360000, priceNC: 190000, priceM: 50000 },
+
+                    // IV. CÔNG TÁC CỔ MÓNG
+                    { group: 'IV. CÔNG TÁC CỔ MÓNG', maHieu: 'AF.22110', name: 'Sản xuất, lắp dựng ván khuôn cổ móng', unit: '100 m²', quantity: v_bt_co * 4 / 100, priceVL: 9000000, priceNC: 9000000, priceM: 0 },
+                    { group: 'IV. CÔNG TÁC CỔ MÓNG', maHieu: 'AF.32110', name: 'Sản xuất, lắp dựng cốt thép cổ móng', unit: 'tấn', quantity: kl_thepCo_kg/1000, priceVL: 18000000, priceNC: 3500000, priceM: 0 },
+                    { group: 'IV. CÔNG TÁC CỔ MÓNG', maHieu: 'AF.42110', name: 'Bê tông cổ móng M250', unit: 'm³', quantity: v_bt_co, priceVL: 1445000, priceNC: 205000, priceM: 50000 },
+
+                    // V. CÔNG TÁC GIẰNG MÓNG
+                    { group: 'V. CÔNG TÁC GIẰNG MÓNG (ĐÀ KIỀNG)', maHieu: 'AF.33110', name: 'Cốt thép giằng móng', unit: 'tấn', quantity: kl_thepGiang_kg/1000, priceVL: 18000000, priceNC: 3500000, priceM: 0 },
+                    { group: 'V. CÔNG TÁC GIẰNG MÓNG (ĐÀ KIỀNG)', maHieu: 'AF.43110', name: 'Bê tông giằng móng M250', unit: 'm³', quantity: v_bt_giang, priceVL: 1445000, priceNC: 190000, priceM: 50000 },
+
+                    // VI. BỂ TỰ HOẠI
+                    { group: 'VI. BỂ TỰ HOẠI & CÔNG TÁC KHÁC', maHieu: 'AF.41110', name: 'Bê tông Bể Tự Hoại', unit: 'm³', quantity: v_bt_bth, priceVL: 1530000, priceNC: 200000, priceM: 50000 },
+                    { group: 'VI. BỂ TỰ HOẠI & CÔNG TÁC KHÁC', maHieu: 'AE.21110', name: 'Xây tường móng (gạch ống)', unit: 'm³', quantity: i.tm_tongDai * i.tm_cao * i.tm_day, priceVL: 880000, priceNC: 380000, priceM: 0 },
+                    { group: 'VI. BỂ TỰ HOẠI & CÔNG TÁC KHÁC', maHieu: 'AF.43110', name: 'Bê tông giằng bó nền', unit: 'm³', quantity: v_bt_bonen, priceVL: 1445000, priceNC: 190000, priceM: 50000 },
+                    { group: 'VI. BỂ TỰ HOẠI & CÔNG TÁC KHÁC', maHieu: 'AF.33110', name: 'Cốt thép giằng bó nền', unit: 'tấn', quantity: kl_thepBoNen_kg/1000, priceVL: 18000000, priceNC: 3500000, priceM: 0 },
                 ];
             }
         };
@@ -1285,16 +1334,28 @@
                 }
 
                 return [
-                    { maHieu: 'AB.21120', name: 'Đào đất tầng hầm', unit: 'm³', quantity: v_dao, price: 26000, type: 'M' },
-                    { maHieu: 'AF.41110', name: 'Bê tông đài móng', unit: 'm³', quantity: v_bt_mong, price: 1360000, type: 'VL' },
-                    { maHieu: 'AF.43110', name: 'Bê tông giằng móng/dầm bè', unit: 'm³', quantity: v_bt_giang, price: 1445000, type: 'VL' },
-                    { maHieu: 'AF.42110', name: 'Bê tông vách hầm', unit: 'm³', quantity: v_bt_wall, price: 1500000, type: 'VL' },
-                    { maHieu: 'AF.42120', name: 'Bê tông sàn đáy hầm', unit: 'm³', quantity: v_bt_floor, price: 1500000, type: 'VL' },
-                    { maHieu: 'AF.42130', name: 'Bê tông bể nước ngầm', unit: 'm³', quantity: v_bt_tank, price: 1580000, type: 'VL' },
-                    { maHieu: 'AF.31110', name: 'Cốt thép móng/giằng', unit: 'tấn', quantity: (kg_thep_mong+kg_thep_giang)/1000, price: 18000000, type: 'VL' },
-                    { maHieu: 'AF.32110', name: 'Cốt thép vách/sàn hầm', unit: 'tấn', quantity: (kg_thep_wall+kg_thep_floor)/1000, price: 17800000, type: 'VL' },
-                    { maHieu: 'AF.32130', name: 'Cốt thép bể ngầm', unit: 'tấn', quantity: kg_thep_tank/1000, price: 18500000, type: 'VL' },
-                    { maHieu: 'AG.51110', name: 'Chống thấm vách hầm', unit: 'm²', quantity: a_wall_vert, price: 120000, type: 'NC' }
+                    // I. CHUẨN BỊ (Similar to Foundation)
+                    { group: 'I. CÔNG TÁC CHUẨN BỊ', maHieu: 'AA.11010', name: 'Công tác định vị tim, mốc, cốt công trình', unit: 'Gói', quantity: 1, priceVL: 0, priceNC: 2000000, priceM: 0 },
+                    { group: 'I. CÔNG TÁC CHUẨN BỊ', maHieu: 'AA.61010', name: 'Lán trại tạm, nhà kho, văn phòng tại công trường', unit: 'm²', quantity: 20, priceVL: 270000, priceNC: 180000, priceM: 0 },
+
+                    // II. ĐẤT
+                    { group: 'II. CÔNG TÁC ĐẤT', maHieu: 'AB.21120', name: 'Đào đất tầng hầm', unit: 'm³', quantity: v_dao, priceVL: 0, priceNC: 26000, priceM: 32500 },
+                    { group: 'II. CÔNG TÁC ĐẤT', maHieu: 'AB.41110', name: 'Vận chuyển đất thải', unit: 'm³', quantity: v_dao, priceVL: 0, priceNC: 16500, priceM: 27500 },
+
+                    // III. MÓNG HẦM
+                    { group: 'III. CÔNG TÁC MÓNG HẦM', maHieu: 'AF.41110', name: 'Bê tông đài móng', unit: 'm³', quantity: v_bt_mong, priceVL: 1360000, priceNC: 190000, priceM: 50000 },
+                    { group: 'III. CÔNG TÁC MÓNG HẦM', maHieu: 'AF.43110', name: 'Bê tông giằng móng/dầm bè', unit: 'm³', quantity: v_bt_giang, priceVL: 1445000, priceNC: 190000, priceM: 50000 },
+                    { group: 'III. CÔNG TÁC MÓNG HẦM', maHieu: 'AF.31110', name: 'Cốt thép móng/giằng', unit: 'tấn', quantity: (kg_thep_mong+kg_thep_giang)/1000, priceVL: 18000000, priceNC: 3500000, priceM: 0 },
+
+                    // IV. VÁCH & SÀN HẦM
+                    { group: 'IV. CÔNG TÁC VÁCH & SÀN HẦM', maHieu: 'AF.42110', name: 'Bê tông vách hầm', unit: 'm³', quantity: v_bt_wall, priceVL: 1500000, priceNC: 205000, priceM: 55000 },
+                    { group: 'IV. CÔNG TÁC VÁCH & SÀN HẦM', maHieu: 'AF.42120', name: 'Bê tông sàn đáy hầm', unit: 'm³', quantity: v_bt_floor, priceVL: 1500000, priceNC: 205000, priceM: 55000 },
+                    { group: 'IV. CÔNG TÁC VÁCH & SÀN HẦM', maHieu: 'AF.32110', name: 'Cốt thép vách/sàn hầm', unit: 'tấn', quantity: (kg_thep_wall+kg_thep_floor)/1000, priceVL: 17800000, priceNC: 3500000, priceM: 0 },
+                    { group: 'IV. CÔNG TÁC VÁCH & SÀN HẦM', maHieu: 'AG.51110', name: 'Chống thấm vách hầm (3 lớp)', unit: 'm²', quantity: a_wall_vert, priceVL: 120000, priceNC: 45000, priceM: 0 },
+
+                    // V. BỂ NGẦM
+                    { group: 'V. CÔNG TÁC BỂ NGẦM', maHieu: 'AF.42130', name: 'Bê tông bể nước ngầm', unit: 'm³', quantity: v_bt_tank, priceVL: 1580000, priceNC: 220000, priceM: 50000 },
+                    { group: 'V. CÔNG TÁC BỂ NGẦM', maHieu: 'AF.32130', name: 'Cốt thép bể ngầm', unit: 'tấn', quantity: kg_thep_tank/1000, priceVL: 18500000, priceNC: 3500000, priceM: 0 },
                 ];
             }
         };
@@ -1755,28 +1816,28 @@
 
                 // New Professional Items
                 const a_son = a_to * i.son_k;
-                // Cua: Assume average price per m2 for input area
-                const val_cua = i.cua_A * 2500000; // 2.5tr/m2 TB
-                // ME
-                const val_me = area * i.me_Gia;
 
                 return [
-                    { maHieu: 'AC.41110', name: 'Bê tông cột T1', unit: 'm³', quantity: v_bt_cot, price: 1445000, type: 'VL' },
-                    { maHieu: 'AC.31110', name: 'Thép cột T1', unit: 'tấn', quantity: kg_thep_cot/1000, price: 18000000, type: 'VL' },
-                    { maHieu: 'AE.21110', name: 'Xây tường T1', unit: 'm³', quantity: v_tuong, price: 920000, type: 'VL' },
-                    { maHieu: 'AE.41110', name: 'Bê tông giằng tường/lanh tô T1', unit: 'm³', quantity: v_bt_gt, price: 1360000, type: 'VL' },
-                    { maHieu: 'AE.31110', name: 'Thép giằng tường/lanh tô T1', unit: 'tấn', quantity: kg_thep_gt/1000, price: 18000000, type: 'VL' },
-                    { maHieu: 'AD.41110', name: 'Bê tông dầm sàn T2/Mái', unit: 'm³', quantity: v_bt_dam + v_bt_san, price: 1445000, type: 'VL' },
-                    { maHieu: 'AD.31110', name: 'Thép dầm sàn T2/Mái', unit: 'tấn', quantity: (kg_thep_dam + kg_thep_san)/1000, price: 17500000, type: 'VL' },
-                    { maHieu: 'AG.11110', name: 'Trát tường T1', unit: 'm²', quantity: a_to, price: 35000, type: 'NC' },
-                    { maHieu: 'AG.31110', name: 'Cán nền T1', unit: 'm³', quantity: v_can, price: 750000, type: 'VL' },
-                    { maHieu: 'AK.11110', name: 'Lát nền T1', unit: 'm²', quantity: a_op, price: 120000, type: 'NC' },
-                    { maHieu: 'AK.21110', name: 'Ốp tường WC T1', unit: 'm²', quantity: a_op_vs, price: 130000, type: 'NC' },
-                    { maHieu: 'AK.31110', name: 'Sơn bả tường T1', unit: 'm²', quantity: a_son, price: 65000, type: 'NC' },
-                    { maHieu: 'AK.41110', name: 'Trần thạch cao T1', unit: 'm²', quantity: i.tran_A, price: 140000, type: 'VL' },
-                    { maHieu: 'AI.11110', name: 'Cửa đi, cửa sổ T1 (Nhôm kính/Gỗ)', unit: 'm²', quantity: i.cua_A, price: 2500000, type: 'VL' },
-                    { maHieu: 'BA.11110', name: 'Hệ thống Điện Nước T1', unit: 'HT', quantity: 1, price: val_me, type: 'VL' },
-                    { maHieu: 'CA.13110', name: 'Lợp mái tôn (nếu có)', unit: 'm²', quantity: a_mai_ton, price: 110000, type: 'VL' },
+                    // VII. KẾT CẤU THÂN (TẦNG 1)
+                    { group: 'VII. KẾT CẤU THÂN (TẦNG 1)', maHieu: 'AC.41110', name: 'Bê tông cột T1', unit: 'm³', quantity: v_bt_cot, priceVL: 1445000, priceNC: 205000, priceM: 50000 },
+                    { group: 'VII. KẾT CẤU THÂN (TẦNG 1)', maHieu: 'AC.31110', name: 'Sản xuất, lắp dựng cốt thép cột T1', unit: 'tấn', quantity: kg_thep_cot/1000, priceVL: 18000000, priceNC: 3500000, priceM: 0 },
+                    { group: 'VII. KẾT CẤU THÂN (TẦNG 1)', maHieu: 'AD.41110', name: 'Bê tông dầm sàn T2/Mái', unit: 'm³', quantity: v_bt_dam + v_bt_san, priceVL: 1445000, priceNC: 205000, priceM: 50000 },
+                    { group: 'VII. KẾT CẤU THÂN (TẦNG 1)', maHieu: 'AD.31110', name: 'Sản xuất, lắp dựng cốt thép dầm sàn T2/Mái', unit: 'tấn', quantity: (kg_thep_dam + kg_thep_san)/1000, priceVL: 17500000, priceNC: 3000000, priceM: 0 },
+                    { group: 'VII. KẾT CẤU THÂN (TẦNG 1)', maHieu: 'AE.21110', name: 'Xây tường T1 (gạch ống 8x8x18)', unit: 'm³', quantity: v_tuong, priceVL: 880000, priceNC: 380000, priceM: 0 },
+                    { group: 'VII. KẾT CẤU THÂN (TẦNG 1)', maHieu: 'AE.41110', name: 'Bê tông giằng tường/lanh tô T1', unit: 'm³', quantity: v_bt_gt, priceVL: 1360000, priceNC: 190000, priceM: 50000 },
+                    { group: 'VII. KẾT CẤU THÂN (TẦNG 1)', maHieu: 'AE.31110', name: 'Cốt thép giằng tường/lanh tô T1', unit: 'tấn', quantity: kg_thep_gt/1000, priceVL: 18000000, priceNC: 3500000, priceM: 0 },
+
+                    // VIII. HOÀN THIỆN TẦNG 1
+                    { group: 'VIII. HOÀN THIỆN TẦNG 1', maHieu: 'AG.11110', name: 'Trát tường T1 (trong và ngoài)', unit: 'm²', quantity: a_to, priceVL: 18000, priceNC: 35000, priceM: 0 },
+                    { group: 'VIII. HOÀN THIỆN TẦNG 1', maHieu: 'AG.31110', name: 'Cán nền T1 (vữa M75 dày 5cm)', unit: 'm³', quantity: v_can, priceVL: 650000, priceNC: 150000, priceM: 20000 },
+                    { group: 'VIII. HOÀN THIỆN TẦNG 1', maHieu: 'AK.11110', name: 'Lát nền T1 (gạch 60x60)', unit: 'm²', quantity: a_op, priceVL: 180000, priceNC: 90000, priceM: 0 },
+                    { group: 'VIII. HOÀN THIỆN TẦNG 1', maHieu: 'AK.21110', name: 'Ốp tường WC T1', unit: 'm²', quantity: a_op_vs, priceVL: 180000, priceNC: 100000, priceM: 0 },
+                    { group: 'VIII. HOÀN THIỆN TẦNG 1', maHieu: 'AK.31110', name: 'Sơn bả tường T1 (1 lót 2 phủ)', unit: 'm²', quantity: a_son, priceVL: 30000, priceNC: 35000, priceM: 0 },
+                    { group: 'VIII. HOÀN THIỆN TẦNG 1', maHieu: 'AK.41110', name: 'Trần thạch cao T1 (khung chìm)', unit: 'm²', quantity: i.tran_A, priceVL: 110000, priceNC: 40000, priceM: 0 },
+
+                    // IX. CỬA & ME TẦNG 1
+                    { group: 'IX. CỬA & ME TẦNG 1', maHieu: 'AI.11110', name: 'Cửa đi, cửa sổ T1 (Nhôm kính/Gỗ)', unit: 'm²', quantity: i.cua_A, priceVL: 2200000, priceNC: 300000, priceM: 0 },
+                    { group: 'IX. CỬA & ME TẦNG 1', maHieu: 'BA.11110', name: 'Hệ thống Điện Nước T1 (trọn gói)', unit: 'm²', quantity: area, priceVL: 900000, priceNC: 600000, priceM: 0 },
                 ];
             }
         };
@@ -2032,19 +2093,25 @@
                 const val_me = area * i.me_Gia;
                 const val_cua = i.cua_A * 2500000;
 
+                const groupName = `X. KẾT CẤU & HOÀN THIỆN TẦNG ${floorIndex}`;
+                const groupFinish = `XI. HOÀN THIỆN & ME TẦNG ${floorIndex}`;
+
                 return [
-                    { maHieu: 'AC.41110', name: `Bê tông cột T${floorIndex}`, unit: 'm³', quantity: v_bt_cot, price: 1445000, type: 'VL' },
-                    { maHieu: 'AC.31110', name: `Thép cột T${floorIndex}`, unit: 'tấn', quantity: kg_thep_cot/1000, price: 18000000, type: 'VL' },
-                    { maHieu: 'AE.21110', name: `Xây tường T${floorIndex}`, unit: 'm³', quantity: v_tuong, price: 920000, type: 'VL' },
-                    { maHieu: 'AD.41110', name: `Bê tông dầm sàn T${floorIndex+1}`, unit: 'm³', quantity: v_bt_dam + v_bt_san, price: 1445000, type: 'VL' },
-                    { maHieu: 'AD.31110', name: `Thép dầm sàn T${floorIndex+1}`, unit: 'tấn', quantity: (kg_thep_dam + kg_thep_san)/1000, price: 17500000, type: 'VL' },
-                    { maHieu: 'AG.11110', name: `Trát tường T${floorIndex}`, unit: 'm²', quantity: a_to, price: 35000, type: 'NC' },
-                    { maHieu: 'AG.31110', name: `Cán nền T${floorIndex}`, unit: 'm³', quantity: v_can, price: 750000, type: 'VL' },
-                    { maHieu: 'AK.11110', name: `Lát nền T${floorIndex}`, unit: 'm²', quantity: a_op, price: 120000, type: 'NC' },
-                    { maHieu: 'AK.31110', name: `Sơn bả tường T${floorIndex}`, unit: 'm²', quantity: a_son, price: 65000, type: 'NC' },
-                    { maHieu: 'AK.41110', name: `Trần thạch cao T${floorIndex}`, unit: 'm²', quantity: i.tran_A, price: 140000, type: 'VL' },
-                    { maHieu: 'AI.11110', name: `Cửa đi, cửa sổ T${floorIndex}`, unit: 'm²', quantity: i.cua_A, price: 2500000, type: 'VL' },
-                    { maHieu: 'BA.11110', name: `Hệ thống Điện Nước T${floorIndex}`, unit: 'HT', quantity: 1, price: val_me, type: 'VL' },
+                    // KẾT CẤU
+                    { group: groupName, maHieu: 'AC.41110', name: `Bê tông cột T${floorIndex}`, unit: 'm³', quantity: v_bt_cot, priceVL: 1445000, priceNC: 205000, priceM: 50000 },
+                    { group: groupName, maHieu: 'AC.31110', name: `Cốt thép cột T${floorIndex}`, unit: 'tấn', quantity: kg_thep_cot/1000, priceVL: 18000000, priceNC: 3500000, priceM: 0 },
+                    { group: groupName, maHieu: 'AD.41110', name: `Bê tông dầm sàn T${floorIndex+1}`, unit: 'm³', quantity: v_bt_dam + v_bt_san, priceVL: 1445000, priceNC: 205000, priceM: 50000 },
+                    { group: groupName, maHieu: 'AD.31110', name: `Cốt thép dầm sàn T${floorIndex+1}`, unit: 'tấn', quantity: (kg_thep_dam + kg_thep_san)/1000, priceVL: 17500000, priceNC: 3000000, priceM: 0 },
+                    { group: groupName, maHieu: 'AE.21110', name: `Xây tường T${floorIndex}`, unit: 'm³', quantity: v_tuong, priceVL: 880000, priceNC: 380000, priceM: 0 },
+
+                    // HOÀN THIỆN
+                    { group: groupFinish, maHieu: 'AG.11110', name: `Trát tường T${floorIndex}`, unit: 'm²', quantity: a_to, priceVL: 18000, priceNC: 35000, priceM: 0 },
+                    { group: groupFinish, maHieu: 'AG.31110', name: `Cán nền T${floorIndex}`, unit: 'm³', quantity: v_can, priceVL: 650000, priceNC: 150000, priceM: 20000 },
+                    { group: groupFinish, maHieu: 'AK.11110', name: `Lát nền T${floorIndex}`, unit: 'm²', quantity: a_op, priceVL: 180000, priceNC: 90000, priceM: 0 },
+                    { group: groupFinish, maHieu: 'AK.31110', name: `Sơn bả tường T${floorIndex}`, unit: 'm²', quantity: a_son, priceVL: 30000, priceNC: 35000, priceM: 0 },
+                    { group: groupFinish, maHieu: 'AK.41110', name: `Trần thạch cao T${floorIndex}`, unit: 'm²', quantity: i.tran_A, priceVL: 110000, priceNC: 40000, priceM: 0 },
+                    { group: groupFinish, maHieu: 'AI.11110', name: `Cửa đi, cửa sổ T${floorIndex}`, unit: 'm²', quantity: i.cua_A, priceVL: 2200000, priceNC: 300000, priceM: 0 },
+                    { group: groupFinish, maHieu: 'BA.11110', name: `Hệ thống Điện Nước T${floorIndex}`, unit: 'HT', quantity: 1, priceVL: val_me*0.6, priceNC: val_me*0.4, priceM: 0 }, // Split ME cost
                 ];
             }
         };
@@ -2190,26 +2257,25 @@
                     const am_cao = getVal('apMai_cao');
                     const am_cot = getVal('apMai_cot_soLuong');
                     const am_tuong = getVal('apMai_tongDaiTuong200') + getVal('apMai_tongDaiTuong100');
-
-                    results.push({ maHieu: 'AC.41110', name: 'Bê tông cột Áp Mái', unit: 'm³', quantity: am_cot * 0.2 * 0.2 * am_cao, price: 1445000, type: 'VL' });
-                    results.push({ maHieu: 'AE.21110', name: 'Xây tường Áp Mái', unit: 'm³', quantity: am_tuong * am_cao * 0.15, price: 920000, type: 'VL' });
-                    results.push({ maHieu: 'AD.41110', name: 'Bê tông sàn Áp Mái', unit: 'm³', quantity: am_dt * 0.1, price: 1445000, type: 'VL' });
+                    results.push({ group: 'XII. KẾT CẤU TẦNG ÁP MÁI', maHieu: 'AC.41110', name: 'Bê tông cột Áp Mái', unit: 'm³', quantity: am_cot * 0.2 * 0.2 * am_cao, priceVL: 1445000, priceNC: 205000, priceM: 50000 });
+                    results.push({ group: 'XII. KẾT CẤU TẦNG ÁP MÁI', maHieu: 'AE.21110', name: 'Xây tường Áp Mái', unit: 'm³', quantity: am_tuong * am_cao * 0.15, priceVL: 880000, priceNC: 380000, priceM: 0 });
+                    results.push({ group: 'XII. KẾT CẤU TẦNG ÁP MÁI', maHieu: 'AD.41110', name: 'Bê tông sàn Áp Mái', unit: 'm³', quantity: am_dt * 0.1, priceVL: 1445000, priceNC: 205000, priceM: 50000 });
                 }
 
                 // Roof Structure
                 if (scenario === 'flat-roof-btct') {
                      const v_bt_mai = area * getVal('r_flat_san_day');
                      const a_chongtham = area * getVal('r_flat_chongTham_heSo');
-                     results.push({ maHieu: 'AD.41110', name: 'Bê tông sàn Mái', unit: 'm³', quantity: v_bt_mai, price: 1445000, type: 'VL' });
-                     results.push({ maHieu: 'AG.51110', name: 'Chống thấm Mái', unit: 'm²', quantity: a_chongtham, price: 75000, type: 'NC' });
+                     results.push({ group: 'XIII. CÔNG TÁC MÁI', maHieu: 'AD.41110', name: 'Bê tông sàn Mái', unit: 'm³', quantity: v_bt_mai, priceVL: 1445000, priceNC: 205000, priceM: 50000 });
+                     results.push({ group: 'XIII. CÔNG TÁC MÁI', maHieu: 'AG.51110', name: 'Chống thấm Mái (2 lớp)', unit: 'm²', quantity: a_chongtham, priceVL: 75000, priceNC: 35000, priceM: 0 });
                 } else if (scenario === 'sloped-roof-btct-tile') {
                      const v_bt_mai = area * 0.12 * 1.2; // Sloped area > plan area
-                     results.push({ maHieu: 'AD.41110', name: 'Bê tông Mái Dốc', unit: 'm³', quantity: v_bt_mai, price: 1445000, type: 'VL' });
-                     results.push({ maHieu: 'CA.13110', name: 'Lợp Ngói Mái', unit: 'm²', quantity: area * getVal('r_sloped_dtLopNgua'), price: 90000, type: 'NC' });
+                     results.push({ group: 'XIII. CÔNG TÁC MÁI', maHieu: 'AD.41110', name: 'Bê tông Mái Dốc', unit: 'm³', quantity: v_bt_mai, priceVL: 1445000, priceNC: 205000, priceM: 50000 });
+                     results.push({ group: 'XIII. CÔNG TÁC MÁI', maHieu: 'CA.13110', name: 'Lợp Ngói Mái', unit: 'm²', quantity: area * getVal('r_sloped_dtLopNgua'), priceVL: 90000, priceNC: 60000, priceM: 0 });
                 } else if (scenario === 'steel-roof-tile') {
                      const kg_thep = getVal('r_steel_maiTon_dienTich') * getVal('r_steel_xaGo_tietDien');
-                     results.push({ maHieu: 'CA.11110', name: 'Kết cấu thép Mái Tôn', unit: 'tấn', quantity: kg_thep/1000, price: 16000000, type: 'VL' });
-                     results.push({ maHieu: 'CA.13110', name: 'Lợp Mái Tôn', unit: 'm²', quantity: getVal('r_steel_maiTon_dienTich'), price: 110000, type: 'NC' });
+                     results.push({ group: 'XIII. CÔNG TÁC MÁI', maHieu: 'CA.11110', name: 'Kết cấu thép Mái Tôn', unit: 'tấn', quantity: kg_thep/1000, priceVL: 16000000, priceNC: 3500000, priceM: 500000 });
+                     results.push({ group: 'XIII. CÔNG TÁC MÁI', maHieu: 'CA.13110', name: 'Lợp Mái Tôn', unit: 'm²', quantity: getVal('r_steel_maiTon_dienTich'), priceVL: 110000, priceNC: 40000, priceM: 0 });
                 }
 
                 return results;
@@ -2255,40 +2321,109 @@
             renderResults(finalItems);
         }
 
+        // Result Tabs Switching Logic
+        function switchResultTab(tabName) {
+            // Hide all
+            document.querySelectorAll('.result-tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.result-tab-btn').forEach(el => {
+                el.classList.remove('bg-gray-100', 'text-primary', 'active');
+                el.classList.add('text-gray-500');
+            });
+
+            // Show selected
+            document.getElementById(`result-content-${tabName}`).classList.remove('hidden');
+            const btn = document.getElementById(`btn-tab-${tabName}`);
+            if(btn) {
+                btn.classList.add('bg-gray-100', 'text-primary', 'active');
+                btn.classList.remove('text-gray-500');
+            }
+        }
+
         let myCostChart = null;
 
         function renderResults(items) {
-            const table = document.getElementById('step3-container');
-            table.classList.remove('hidden');
-            table.scrollIntoView({ behavior: 'smooth' });
+            const container = document.getElementById('step3-container');
+            container.classList.remove('hidden');
+            container.scrollIntoView({ behavior: 'smooth' });
 
-            const resultArea = document.getElementById('finalResultArea');
-
-            // 1. Calculate VL, NC, M
-            let totalVL = 0, totalNC = 0, totalM = 0;
-            let rowsHTML = '';
-
-            items.forEach((item, index) => {
-                const tt = item.quantity * item.price;
-                if (item.type === 'VL') totalVL += tt;
-                else if (item.type === 'NC') totalNC += tt;
-                else if (item.type === 'M') totalM += tt;
-                else totalVL += tt; // Default to VL if unknown
-
-                rowsHTML += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${item.maHieu}</td>
-                        <td>${item.name}</td>
-                        <td>${item.unit}</td>
-                        <td>${formatNumber(item.quantity)}</td>
-                        <td>${formatNumber(item.price)}</td>
-                        <td>${formatNumber(tt)}</td>
-                    </tr>
-                `;
+            // 1. Group and Sort Items
+            let groups = {};
+            items.forEach(item => {
+                if (!groups[item.group]) groups[item.group] = [];
+                groups[item.group].push(item);
             });
 
-            // 2. Summary Logic
+            // 2. Iterate Logic
+            let totalVL = 0, totalNC = 0, totalM = 0;
+            let estimateRowsHTML = '';
+            let bidRowsHTML = '';
+            let stt = 1;
+
+            for (const [groupName, groupItems] of Object.entries(groups)) {
+                // Group Header Row
+                estimateRowsHTML += `
+                    <tr class="bg-primary text-white font-bold uppercase text-sm">
+                        <td colspan="11" class="px-3 py-2">${groupName}</td>
+                    </tr>
+                `;
+                bidRowsHTML += `
+                    <tr class="bg-gray-100 font-bold uppercase text-sm text-text-primary">
+                        <td colspan="6" class="px-3 py-2">${groupName}</td>
+                    </tr>
+                `;
+
+                groupItems.forEach((item) => {
+                    const quantity = item.quantity;
+                    const priceVL = item.priceVL || 0;
+                    const priceNC = item.priceNC || 0;
+                    const priceM = item.priceM || 0;
+
+                    const ttVL = quantity * priceVL;
+                    const ttNC = quantity * priceNC;
+                    const ttM = quantity * priceM;
+                    const ttTotal = ttVL + ttNC + ttM;
+                    const priceTotal = priceVL + priceNC + priceM;
+
+                    totalVL += ttVL;
+                    totalNC += ttNC;
+                    totalM += ttM;
+
+                    // Estimate Table Row (Split Columns)
+                    estimateRowsHTML += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="text-center py-2">${stt}</td>
+                            <td class="font-mono text-xs text-center py-2">${item.maHieu}</td>
+                            <td class="py-2 pl-2">${item.name}</td>
+                            <td class="text-center py-2">${item.unit}</td>
+                            <td class="text-right py-2 pr-2">${formatNumber(quantity)}</td>
+
+                            <td class="text-right text-gray-700 py-2 pr-2">${priceVL > 0 ? formatNumber(priceVL) : '-'}</td>
+                            <td class="text-right text-gray-700 py-2 pr-2">${priceNC > 0 ? formatNumber(priceNC) : '-'}</td>
+                            <td class="text-right text-gray-700 py-2 pr-2">${priceM > 0 ? formatNumber(priceM) : '-'}</td>
+
+                            <td class="text-right font-medium py-2 pr-2">${ttVL > 0 ? formatNumber(ttVL) : '-'}</td>
+                            <td class="text-right font-medium py-2 pr-2">${ttNC > 0 ? formatNumber(ttNC) : '-'}</td>
+                            <td class="text-right font-medium py-2 pr-2">${ttM > 0 ? formatNumber(ttM) : '-'}</td>
+                        </tr>
+                    `;
+
+                    // Bid Table Row
+                    bidRowsHTML += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="text-center py-2">${stt}</td>
+                            <td class="py-2 pl-2">${item.name}</td>
+                            <td class="text-center py-2">${item.unit}</td>
+                            <td class="text-right py-2 pr-2">${formatNumber(quantity)}</td>
+                            <td class="text-right py-2 pr-2">${formatNumber(priceTotal)}</td>
+                            <td class="text-right font-bold py-2 pr-2">${formatNumber(ttTotal)}</td>
+                        </tr>
+                    `;
+
+                    stt++;
+                });
+            }
+
+            // 3. Summary Logic
             const k_c = getVal('cfg_chiPhiChung') / 100;
             const k_tl = getVal('cfg_thuNhapChiuThue') / 100;
             const k_vat = getVal('cfg_vat') / 100;
@@ -2303,42 +2438,69 @@
             const DP = G_xd * k_dp;
             const G_all = G_xd + DP;
 
-            // 3. Render Detail Table
-            let html = `
-                <h3 class="text-xl font-semibold text-primary mb-2">1. Bảng Tiên Lượng Chi Tiết</h3>
-                <table class="result-table mb-8">
+            document.getElementById('tempTotalCost').textContent = formatCurrency(G_all);
+
+            // 4. Render Estimate Table (Tab 1)
+            const estimateTableHTML = `
+                <table class="result-table">
                     <thead>
                         <tr>
-                            <th>STT</th>
-                            <th>Mã Hiệu</th>
-                            <th>Tên Công Việc</th>
-                            <th>Đơn Vị</th>
-                            <th>Khối Lượng</th>
-                            <th>Đơn Giá</th>
-                            <th>Thành Tiền</th>
+                            <th rowspan="2">STT</th>
+                            <th rowspan="2">Mã Hiệu</th>
+                            <th rowspan="2">Tên Công Việc</th>
+                            <th rowspan="2">Đơn Vị</th>
+                            <th rowspan="2">KL</th>
+                            <th colspan="3" class="text-center">Đơn Giá (VNĐ)</th>
+                            <th colspan="3" class="text-center">Thành Tiền (VNĐ)</th>
+                        </tr>
+                        <tr>
+                            <th class="text-center">Vật Liệu</th>
+                            <th class="text-center">Nhân Công</th>
+                            <th class="text-center">Máy</th>
+                            <th class="text-center">Vật Liệu</th>
+                            <th class="text-center">Nhân Công</th>
+                            <th class="text-center">Máy</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${rowsHTML}
-                        <tr class="font-bold bg-gray-100">
-                            <td colspan="6" class="text-right">Tổng Vật Liệu</td>
-                            <td>${formatCurrency(totalVL)}</td>
-                        </tr>
-                        <tr class="font-bold bg-gray-100">
-                            <td colspan="6" class="text-right">Tổng Nhân Công</td>
-                            <td>${formatCurrency(totalNC)}</td>
-                        </tr>
-                        <tr class="font-bold bg-gray-100">
-                            <td colspan="6" class="text-right">Tổng Máy Thi Công</td>
-                            <td>${formatCurrency(totalM)}</td>
+                        ${estimateRowsHTML}
+                        <tr class="font-bold bg-gray-200">
+                            <td colspan="8" class="text-right uppercase p-2">Tổng Cộng Chi Phí Trực Tiếp</td>
+                            <td class="text-right p-2">${formatNumber(totalVL)}</td>
+                            <td class="text-right p-2">${formatNumber(totalNC)}</td>
+                            <td class="text-right p-2">${formatNumber(totalM)}</td>
                         </tr>
                     </tbody>
                 </table>
             `;
+            document.getElementById('estimateTableContainer').innerHTML = estimateTableHTML;
 
-            // 4. Render Summary Table
-            html += `
-                <h3 class="text-xl font-semibold text-primary mb-2">2. Bảng Tổng Hợp Kinh Phí (Professional)</h3>
+            // 5. Render Bid Table (Tab 2)
+            const bidTableHTML = `
+                <table class="result-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên Công Việc</th>
+                            <th>Đơn Vị</th>
+                            <th>Khối Lượng</th>
+                            <th>Đơn Giá Tổng</th>
+                            <th>Thành Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${bidRowsHTML}
+                        <tr class="font-bold bg-gray-200">
+                            <td colspan="5" class="text-right uppercase p-2">Tổng Cộng</td>
+                            <td class="text-right p-2">${formatNumber(T)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            document.getElementById('bidTableContainer').innerHTML = bidTableHTML;
+
+            // 6. Render Summary Table (Tab 3)
+            const summaryTableHTML = `
                 <table class="result-table">
                     <thead>
                         <tr>
@@ -2367,11 +2529,9 @@
                     </tbody>
                 </table>
             `;
+            document.getElementById('summaryTableContainer').innerHTML = summaryTableHTML;
 
-            resultArea.innerHTML = html;
-            document.getElementById('tempTotalCost').textContent = formatCurrency(G_all);
-
-            // 5. Update Chart
+            // 7. Update Chart
             updateChart(totalVL, totalNC, totalM, C + TL + VAT + DP);
         }
 
@@ -2417,9 +2577,28 @@
         document.getElementById('printReportBtn').addEventListener('click', () => window.print());
         document.getElementById('exportExcelBtn').addEventListener('click', () => {
              const wb = XLSX.utils.book_new();
-             const table = document.querySelector('.result-table');
-             const ws = XLSX.utils.table_to_sheet(table);
-             XLSX.utils.book_append_sheet(wb, ws, "DuToan");
+
+             // Sheet 1: Tien Luong (Estimate)
+             const table1 = document.querySelector('#estimateTableContainer table');
+             if(table1) {
+                 const ws1 = XLSX.utils.table_to_sheet(table1);
+                 XLSX.utils.book_append_sheet(wb, ws1, "TienLuong");
+             }
+
+             // Sheet 2: Du Thau (Bid)
+             const table2 = document.querySelector('#bidTableContainer table');
+             if(table2) {
+                 const ws2 = XLSX.utils.table_to_sheet(table2);
+                 XLSX.utils.book_append_sheet(wb, ws2, "DuThau");
+             }
+
+             // Sheet 3: Tong Hop (Summary)
+             const table3 = document.querySelector('#summaryTableContainer table');
+             if(table3) {
+                 const ws3 = XLSX.utils.table_to_sheet(table3);
+                 XLSX.utils.book_append_sheet(wb, ws3, "TongHop");
+             }
+
              XLSX.writeFile(wb, "DuToanChiTiet.xlsx");
         });
 
