@@ -57,6 +57,16 @@
         <!-- Global Configuration -->
         <section class="mb-8 bg-blue-50 p-6 rounded-xl border border-blue-200 print-hide">
             <h2 class="section-header">1. Thông Tin Chung Công Trình</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Chủ Đầu Tư</label>
+                    <input type="text" id="global_owner" class="form-input" placeholder="Nguyễn Văn A">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Địa Chỉ Công Trình</label>
+                    <input type="text" id="global_address" class="form-input" placeholder="Số 123, Đường ABC, TP.HCM">
+                </div>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Loại Công Trình</label>
@@ -379,9 +389,9 @@
         </div>
         <div id="tab-tang2" class="tab-content hidden print-hide">
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                <h3 class="text-lg font-bold text-primary mb-4 border-b pb-2">Cấu Hình Tầng Điển Hình (T2 -> Áp Mái)</h3>
+                <h3 class="text-lg font-bold text-primary mb-4 border-b pb-2">Cấu Hình Tầng Điển Hình (Các Tầng Trên)</h3>
                 <div class="mb-4 p-3 bg-blue-50 text-blue-800 rounded text-sm">
-                    <strong>Lưu ý:</strong> Số lượng tầng điển hình sẽ được tính tự động (Tổng tầng - 2). Ví dụ nhà 4 tầng: T1 + T2, T3 (Điển hình x2) + Mái.
+                    <strong>Lưu ý:</strong> Số lượng tầng điển hình sẽ được tính tự động (Tổng tầng - 1). Ví dụ nhà 3 tầng: T1 + T2, T3 (Điển hình x2) + Mái.
                 </div>
 
                 <!-- 1. Cột -->
@@ -501,32 +511,58 @@
 
         <!-- Result -->
         <div id="resultSection" class="mt-8 hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Bảng Dự Toán Chi Tiết</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 border text-sm">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-3 py-3 text-left font-bold text-gray-600">STT</th>
-                            <th class="px-3 py-3 text-left font-bold text-gray-600">Mã Hiệu</th>
-                            <th class="px-3 py-3 text-left font-bold text-gray-600">Hạng Mục</th>
-                            <th class="px-3 py-3 text-center font-bold text-gray-600">ĐV</th>
-                            <th class="px-3 py-3 text-right font-bold text-gray-600">Khối Lượng</th>
-                            <th class="px-3 py-3 text-right font-bold text-gray-600">ĐG VT</th>
-                            <th class="px-3 py-3 text-right font-bold text-gray-600">ĐG NC</th>
-                            <th class="px-3 py-3 text-right font-bold text-gray-600">ĐG Máy</th>
-                            <th class="px-3 py-3 text-right font-bold text-gray-600">Thành Tiền</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultTableBody" class="bg-white divide-y divide-gray-200">
-                        <!-- Data rows here -->
-                    </tbody>
-                    <tfoot class="bg-gray-50 font-bold">
-                        <tr>
-                            <td colspan="8" class="px-3 py-3 text-right">TỔNG CỘNG:</td>
-                            <td id="grandTotalDisplay" class="px-3 py-3 text-right text-primary">0</td>
-                        </tr>
-                    </tfoot>
-                </table>
+            <!-- Detailed Table -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Bảng Dự Toán Chi Tiết</h2>
+                <div class="overflow-x-auto shadow-sm rounded-lg border">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-3 py-3 text-left font-bold text-gray-600">STT</th>
+                                <th class="px-3 py-3 text-left font-bold text-gray-600">Mã Hiệu</th>
+                                <th class="px-3 py-3 text-left font-bold text-gray-600">Hạng Mục</th>
+                                <th class="px-3 py-3 text-center font-bold text-gray-600">ĐV</th>
+                                <th class="px-3 py-3 text-right font-bold text-gray-600">Khối Lượng</th>
+                                <th class="px-3 py-3 text-right font-bold text-gray-600">ĐG VT</th>
+                                <th class="px-3 py-3 text-right font-bold text-gray-600">ĐG NC</th>
+                                <th class="px-3 py-3 text-right font-bold text-gray-600">ĐG Máy</th>
+                                <th class="px-3 py-3 text-right font-bold text-gray-600">Thành Tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Data rows here -->
+                        </tbody>
+                        <tfoot class="bg-gray-50 font-bold">
+                            <tr>
+                                <td colspan="8" class="px-3 py-3 text-right">CỘNG CHI PHÍ TRỰC TIẾP:</td>
+                                <td id="grandTotalDisplay" class="px-3 py-3 text-right text-primary">0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Summary Table -->
+            <div id="summarySection">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Bảng Tổng Hợp Kinh Phí</h2>
+                <div class="overflow-x-auto shadow-sm rounded-lg border">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-blue-600 text-white">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-bold">STT</th>
+                                <th class="px-4 py-3 text-left font-bold">Khoản Mục Chi Phí</th>
+                                <th class="px-4 py-3 text-left font-bold">Cách Tính</th>
+                                <th class="px-4 py-3 text-right font-bold">Thành Tiền (VNĐ)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Summary rows here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-6 text-right">
+                    <p class="text-sm text-gray-500 italic">Giá trị dự toán đã bao gồm thuế VAT và các chi phí theo quy định hiện hành.</p>
+                </div>
             </div>
         </div>
 
@@ -1069,9 +1105,8 @@
             },
             calculate: function() {
                 const floors = parseInt(document.getElementById('global_floors').value) || 1;
-                // Count = Floors - 2. (Ex: 3 Floors -> T1, T2(Typ), Roof. Count=1)
-                // If Floors < 3, Count = 0.
-                const count = Math.max(0, floors - 2);
+                // Count = Floors - 1. (Ex: 2 Floors -> T1 + T2(Typ). Count=1)
+                const count = Math.max(0, floors - 1);
                 if (count === 0) return [];
 
                 const items = [];
@@ -1294,6 +1329,11 @@
                 let grandTotal = 0;
                 let stt = 1;
 
+                // Aggregation Accumulators
+                let sumVT = 0;
+                let sumNC = 0;
+                let sumM = 0;
+
                 const renderSection = (title, items) => {
                     if(!items || items.length === 0) return;
 
@@ -1304,7 +1344,14 @@
                     tbody.appendChild(trHead);
 
                     items.forEach(item => {
-                        const total = item.qty * (item.priceVT + item.priceNC + item.priceM);
+                        const tVT = item.qty * item.priceVT;
+                        const tNC = item.qty * item.priceNC;
+                        const tM = item.qty * item.priceM;
+                        const total = tVT + tNC + tM;
+
+                        sumVT += tVT;
+                        sumNC += tNC;
+                        sumM += tM;
                         grandTotal += total;
 
                         const tr = document.createElement('tr');
@@ -1336,8 +1383,9 @@
 
                 // 4. Typical Floors
                 const floors = getVal('global_floors');
-                if(floors > 2) {
-                    renderSection(`IV. PHẦN THÂN - CÁC TẦNG TRÊN (x${floors-2} tầng)`, TypicalFloorManager.calculate());
+                // Updated logic: if floors > 1, we have typical floors
+                if(floors > 1) {
+                    renderSection(`IV. PHẦN THÂN - CÁC TẦNG TRÊN (x${floors-1} tầng)`, TypicalFloorManager.calculate());
                 }
 
                 // 5. Roof
@@ -1347,14 +1395,98 @@
                 document.getElementById('grandTotalDisplay').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(grandTotal);
                 document.getElementById('resultSection').classList.remove('hidden');
 
+                // Store totals for Summary Render
+                GlobalManager.currentTotals = { sumVT, sumNC, sumM, grandTotal };
+                GlobalManager.renderSummaryTable();
+
                 // Scroll to result
                 document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
             },
+            renderSummaryTable: function() {
+                const t = this.currentTotals;
+                if(!t) return;
+                const tbody = document.getElementById('summaryTableBody');
+                tbody.innerHTML = '';
+
+                const fmt = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(n));
+
+                // 1. Chi phí trực tiếp (T)
+                const T = t.sumVT + t.sumNC + t.sumM;
+
+                // 2. Chi phí chung (C)
+                const C_percent = 6.5;
+                const C = T * (C_percent / 100);
+
+                // 3. Thu nhập chịu thuế tính trước (TL)
+                const TL_percent = 5.5;
+                const TL = (T + C) * (TL_percent / 100);
+
+                // 4. Chi phí xây dựng sau thuế (G)
+                const G = T + C + TL;
+
+                // 5. Thuế GTGT (VAT)
+                const VAT = G * 0.1;
+
+                // 6. Chi phí xây dựng (Gxd)
+                const Gxd = G + VAT;
+                this.finalTotal = Gxd;
+
+                const rows = [
+                    { stt: 'I', name: 'Chi phí trực tiếp', calc: 'T = VL + NC + M', val: T, bold: true },
+                    { stt: '1', name: 'Chi phí vật liệu (VL)', calc: '', val: t.sumVT, bold: false, indent: true },
+                    { stt: '2', name: 'Chi phí nhân công (NC)', calc: '', val: t.sumNC, bold: false, indent: true },
+                    { stt: '3', name: 'Chi phí máy thi công (M)', calc: '', val: t.sumM, bold: false, indent: true },
+                    { stt: 'II', name: 'Chi phí chung (C)', calc: `C = T x ${C_percent}%`, val: C, bold: true },
+                    { stt: 'III', name: 'Thu nhập chịu thuế tính trước (TL)', calc: `TL = (T + C) x ${TL_percent}%`, val: TL, bold: true },
+                    { stt: 'IV', name: 'Chi phí xây dựng trước thuế (G)', calc: 'G = T + C + TL', val: G, bold: true },
+                    { stt: 'V', name: 'Thuế giá trị gia tăng (VAT)', calc: 'VAT = G x 10%', val: VAT, bold: true },
+                    { stt: 'VI', name: 'TỔNG CỘNG GIÁ TRỊ DỰ TOÁN', calc: 'Gxd = G + VAT', val: Gxd, bold: true, highlight: true }
+                ];
+
+                rows.forEach(r => {
+                    const tr = document.createElement('tr');
+                    if (r.highlight) tr.className = 'bg-yellow-50';
+                    tr.innerHTML = `
+                        <td class="px-4 py-2 font-medium ${r.bold?'text-gray-900':'text-gray-600'}">${r.stt}</td>
+                        <td class="px-4 py-2 ${r.bold?'font-bold':''} ${r.indent?'pl-8':''}">${r.name}</td>
+                        <td class="px-4 py-2 text-gray-500 italic">${r.calc}</td>
+                        <td class="px-4 py-2 text-right ${r.bold?'font-bold text-primary':''}">${fmt(r.val)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            },
             exportExcel: function() {
-                const table = document.querySelector('#resultSection table');
-                if(!table) return;
-                const wb = XLSX.utils.table_to_book(table, {sheet:"DuToanTongHop"});
-                XLSX.writeFile(wb, 'DuToanXayDung.xlsx');
+                // Get Detailed Table
+                const tableDetail = document.querySelector('#resultSection table'); // First table
+                const tableSummary = document.querySelector('#summaryTableBody').parentNode; // Second table
+
+                if(!tableDetail || !tableSummary) return;
+
+                const wb = XLSX.utils.book_new();
+
+                // Info
+                const owner = document.getElementById('global_owner').value;
+                const addr = document.getElementById('global_address').value;
+                const info = [
+                    ["CHỦ ĐẦU TƯ:", owner],
+                    ["ĐỊA CHỈ:", addr],
+                    ["LOẠI CÔNG TRÌNH:", document.getElementById('global_projectType').value],
+                    ["DIỆN TÍCH:", document.getElementById('global_area').value + " m2"],
+                    ["QUY MÔ:", document.getElementById('global_floors').value + " Tầng"],
+                    [""]
+                ];
+
+                // Sheet 1: Detailed
+                const wsDetail = XLSX.utils.aoa_to_sheet(info);
+                XLSX.utils.sheet_add_dom(wsDetail, tableDetail, {origin: "A7"});
+                XLSX.utils.book_append_sheet(wb, wsDetail, "DuToanChiTiet");
+
+                // Sheet 2: Summary
+                const wsSummary = XLSX.utils.aoa_to_sheet([["BẢNG TỔNG HỢP KINH PHÍ"]]);
+                XLSX.utils.sheet_add_dom(wsSummary, tableSummary, {origin: "A3"});
+                XLSX.utils.book_append_sheet(wb, wsSummary, "TongHopKinhPhi");
+
+                XLSX.writeFile(wb, 'DuToan_ChuyenNghiep.xlsx');
             }
         };
 
@@ -1398,11 +1530,11 @@
                 nav_ham.style.display = 'none';
             }
 
-            // Typical Floor (Show if > 2 floors)
+            // Typical Floor (Show if > 1 floors)
             const floors = parseInt(global_floors.value) || 1;
-            if (floors > 2) {
+            if (floors > 1) {
                 nav_tang2.style.display = 'inline-block';
-                nav_tang2.textContent = `Tầng Điển Hình (x${floors - 2})`;
+                nav_tang2.textContent = `Tầng Điển Hình (x${floors - 1})`;
             } else {
                 nav_tang2.style.display = 'none';
             }
