@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Dự Toán Xây Dựng Tổng Hợp</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-bg': '#f3f4f6',
+                        'primary': '#0369a1',
+                        'primary-dark': '#075985',
+                        'accent': '#f59e0b',
+                        'text-primary': '#1f2937',
+                        'text-secondary': '#4b5563',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .tab-btn.active {
+            @apply border-primary text-primary border-b-2;
+        }
+        .form-input {
+            @apply w-full p-2 bg-white border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-primary;
+        }
+        .section-header {
+            @apply text-xl font-semibold text-primary mb-4 border-l-4 border-accent pl-3;
+        }
+        @media print {
+            .print-hide { display: none !important; }
+            body { background: white; padding: 0; }
+            .container-card { box-shadow: none; max-width: 100%; }
+        }
+    </style>
+</head>
+<body class="bg-brand-bg p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto bg-white p-6 rounded-2xl shadow-xl">
+
+        <!-- Header -->
+        <header class="mb-8 border-b pb-4 print-hide">
+            <h1 class="text-3xl font-bold text-primary flex items-center gap-2">
+                <span>🏗️</span> Hệ Thống Dự Toán Xây Dựng Tổng Hợp
+            </h1>
+            <p class="text-text-secondary mt-2">Tính toán dự toán chi tiết từ Móng đến Mái cho Nhà Phố / Biệt Thự.</p>
+        </header>
+
+        <!-- Global Configuration -->
+        <section class="mb-8 bg-blue-50 p-6 rounded-xl border border-blue-200 print-hide">
+            <h2 class="section-header">1. Thông Tin Chung Công Trình</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Loại Công Trình</label>
+                    <select id="global_projectType" class="form-input">
+                        <option value="nha-pho">Nhà phố</option>
+                        <option value="biet-thu">Biệt thự</option>
+                        <option value="khac">Khác</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Diện Tích Xây Dựng (m²)</label>
+                    <input type="number" id="global_area" class="form-input" placeholder="80" value="80">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tổng Số Tầng</label>
+                    <input type="number" id="global_floors" class="form-input" placeholder="3" value="3">
+                </div>
+                <div class="flex items-center pt-6">
+                    <input type="checkbox" id="global_hasBasement" class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary">
+                    <label for="global_hasBasement" class="ml-2 block text-sm font-medium text-gray-700">Có Tầng Hầm</label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabs Navigation -->
+        <div class="mb-6 border-b border-gray-200 print-hide">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <button class="tab-btn active whitespace-nowrap py-4 px-1 border-b-2 border-primary font-medium text-sm text-primary" data-target="tab-mong">
+                    Phần Móng
+                </button>
+                <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-target="tab-ham" id="nav-ham" style="display:none;">
+                    Tầng Hầm
+                </button>
+                <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-target="tab-tang1">
+                    Tầng 1
+                </button>
+                <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-target="tab-tang2" id="nav-tang2">
+                    Tầng Điển Hình
+                </button>
+                <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-target="tab-mai">
+                    Phần Mái
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Contents -->
+        <div id="tab-mong" class="tab-content block print-hide">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <h3 class="text-lg font-bold text-primary mb-4 border-b pb-2">Cấu Hình Phần Móng</h3>
+
+                <!-- 1. Công tác chuẩn bị -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-3">1. Công Tác Chuẩn Bị</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Trắc đạc / Tim mốc</label>
+                            <select id="mong_congTacTracDac" class="form-input text-sm">
+                                <option value="1">Trọn gói</option>
+                                <option value="0">Không tính</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Diện tích lán trại (m²)</label>
+                            <input type="number" id="mong_dienTichLanTrai" class="form-input text-sm" placeholder="15">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Loại Móng -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-3">2. Loại Móng & Kích Thước</h4>
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium text-gray-500">Chọn loại móng</label>
+                        <select id="mong_foundationType" class="form-input text-sm font-bold text-primary">
+                            <option value="don">Móng Đơn</option>
+                            <option value="bang1p">Móng Băng 1 Phương</option>
+                            <option value="bang2p">Móng Băng 2 Phương</option>
+                        </select>
+                    </div>
+
+                    <!-- Params Móng Đơn -->
+                    <div id="mong_params_don" class="p-4 bg-gray-50 rounded border border-gray-200">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div><label class="text-xs">Số lượng</label><input type="number" id="mong_md_soLuong" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Dài (m)</label><input type="number" id="mong_md_dai" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Rộng (m)</label><input type="number" id="mong_md_rong" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Cao (m)</label><input type="number" id="mong_md_day" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Thép Φ</label><input type="number" id="mong_md_thep_ra_phi" class="form-input text-sm"></div>
+                            <div><label class="text-xs">A (mm)</label><input type="number" id="mong_md_thep_ra_a" class="form-input text-sm"></div>
+                        </div>
+                    </div>
+
+                    <!-- Params Móng Băng -->
+                    <div id="mong_params_bang" class="hidden p-4 bg-gray-50 rounded border border-gray-200">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div><label class="text-xs">Tổng Dài (m)</label><input type="number" id="mong_mb_tongDai" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Rộng Bản (m)</label><input type="number" id="mong_mb_rong" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Cao Bản (m)</label><input type="number" id="mong_mb_day" class="form-input text-sm"></div>
+                            <div class="hidden"></div>
+                            <div><label class="text-xs">Thép Bản Φ</label><input type="number" id="mong_mb_thep_ra_phi" class="form-input text-sm"></div>
+                            <div><label class="text-xs">A (mm)</label><input type="number" id="mong_mb_thep_ra_a" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Thép Dầm SL</label><input type="number" id="mong_mb_thep_dam_soluong" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Thép Dầm Φ</label><input type="number" id="mong_mb_thep_dam_phi" class="form-input text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Cổ Móng & Giằng -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-3">3. Cổ Móng & Giằng Móng</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Cổ Móng -->
+                        <div class="p-3 border rounded">
+                            <h5 class="text-sm font-bold mb-2">Cổ Móng</h5>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label class="text-xs">Số lượng</label><input type="number" id="mong_cm_soLuong" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Cao (m)</label><input type="number" id="mong_cm_cao" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Dài (m)</label><input type="number" id="mong_cm_dai" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Rộng (m)</label><input type="number" id="mong_cm_rong" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Thép Chủ SL</label><input type="number" id="mong_cm_thep_chu_soluong" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Thép Chủ Φ</label><input type="number" id="mong_cm_thep_chu_phi" class="form-input text-sm"></div>
+                            </div>
+                        </div>
+                        <!-- Giằng Móng -->
+                        <div class="p-3 border rounded">
+                            <h5 class="text-sm font-bold mb-2">Giằng Móng (Đà Kiềng)</h5>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label class="text-xs">Tổng Dài (m)</label><input type="number" id="mong_gm_tongDai" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Cao (m)</label><input type="number" id="mong_gm_cao" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Rộng (m)</label><input type="number" id="mong_gm_rong" class="form-input text-sm"></div>
+                                <div><label class="text-xs text-gray-400">---</label></div>
+                                <div><label class="text-xs">Thép Chủ SL</label><input type="number" id="mong_gm_thep_chu_soluong" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Thép Chủ Φ</label><input type="number" id="mong_gm_thep_chu_phi" class="form-input text-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Bể Phốt & Khác -->
+                <div>
+                    <h4 class="font-semibold text-gray-700 mb-3">4. Bể Tự Hoại & Công Tác Khác</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div><label class="text-xs">Sâu đào móng (m)</label><input type="number" id="mong_chieuSauChonMong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">SL Bể Phốt</label><input type="number" id="mong_bth_soLuong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Dài Bể (m)</label><input type="number" id="mong_bth_dai" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Rộng Bể (m)</label><input type="number" id="mong_bth_rong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Cao Bể (m)</label><input type="number" id="mong_bth_cao" class="form-input text-sm"></div>
+                        <div class="hidden"><input type="number" id="mong_bth_soVachNgan" value="2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="tab-ham" class="tab-content hidden print-hide">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <h3 class="text-lg font-bold text-primary mb-4 border-b pb-2">Cấu Hình Tầng Hầm</h3>
+
+                <!-- 1. Đất & Móng Hầm -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-3">1. Đất & Đài Móng Hầm</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Khoảng hở thi công (m)</label>
+                            <input type="number" id="ham_soil_working_space" class="form-input text-sm" value="1.0">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Cự ly vận chuyển (km)</label>
+                            <input type="number" id="ham_soil_cuLyVC" class="form-input text-sm" value="10">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Sâu hầm (m)</label>
+                            <input type="number" id="ham_basementDepth" class="form-input text-sm" value="2.5">
+                        </div>
+                    </div>
+
+                    <!-- Foundation Type for Basement -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium text-gray-500">Loại Móng Hầm</label>
+                        <select id="ham_foundationType" class="form-input text-sm font-bold text-primary">
+                            <option value="don">Móng Đơn</option>
+                            <option value="bang">Móng Băng</option>
+                            <option value="be">Móng Bè</option>
+                        </select>
+                    </div>
+
+                    <!-- Params Specific -->
+                    <div id="ham_params_container" class="p-4 bg-gray-50 rounded border border-gray-200">
+                        <!-- Móng Đơn -->
+                        <div id="ham_p_don" class="">
+                            <h5 class="text-xs font-bold mb-2">Móng Đơn</h5>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div><label class="text-xs">SL</label><input type="number" id="ham_md_soLuong" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Dài</label><input type="number" id="ham_md_dai" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Rộng</label><input type="number" id="ham_md_rong" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Cao</label><input type="number" id="ham_md_day" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Giằng Dài</label><input type="number" id="ham_md_giang_chieuDai" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Giằng TD</label><input type="number" id="ham_md_giang_tietDien" class="form-input text-sm" placeholder="0.3"></div>
+                            </div>
+                        </div>
+                        <!-- Móng Băng -->
+                        <div id="ham_p_bang" class="hidden">
+                            <h5 class="text-xs font-bold mb-2">Móng Băng</h5>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div><label class="text-xs">Tổng Dài</label><input type="number" id="ham_mb_tongDai" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Rộng Bản</label><input type="number" id="ham_mb_rongBan" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Cao Bản</label><input type="number" id="ham_mb_dayBan" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Giằng TD</label><input type="number" id="ham_mb_giang_tietDien" class="form-input text-sm"></div>
+                            </div>
+                        </div>
+                        <!-- Móng Bè -->
+                        <div id="ham_p_be" class="hidden">
+                            <h5 class="text-xs font-bold mb-2">Móng Bè</h5>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div><label class="text-xs">Diện tích</label><input type="number" id="ham_mbe_dienTich" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Dày Bản</label><input type="number" id="ham_mbe_day" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Dầm Dài</label><input type="number" id="ham_mbe_dam_tongDai" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Dầm Rộng</label><input type="number" id="ham_mbe_dam_rong" class="form-input text-sm"></div>
+                                <div><label class="text-xs">Dầm Cao</label><input type="number" id="ham_mbe_dam_cao" class="form-input text-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Vách & Sàn Hầm -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-3">2. Vách & Sàn Hầm</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div><label class="text-xs">Dày Vách (m)</label><input type="number" id="ham_wall_day" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Dày Sàn (m)</label><input type="number" id="ham_floor_day" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Thép Vách Φ</label><input type="number" id="ham_wall_thep_phi" class="form-input text-sm" value="12"></div>
+                        <div><label class="text-xs">Thép Sàn Φ</label><input type="number" id="ham_floor_thep_phi" class="form-input text-sm" value="12"></div>
+                    </div>
+                </div>
+
+                <!-- 3. Cột & Dầm Tầng Hầm -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-3">3. Cột & Dầm (Trong Hầm)</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div><label class="text-xs">SL Cột</label><input type="number" id="ham_cot_soLuong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Cột Dài</label><input type="number" id="ham_cot_dai" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Cột Rộng</label><input type="number" id="ham_cot_rong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Dầm Dài</label><input type="number" id="ham_dam_tongDai" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Dầm Rộng</label><input type="number" id="ham_dam_rong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Dầm Cao</label><input type="number" id="ham_dam_cao" class="form-input text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- 4. Hoàn Thiện & Chống Thấm -->
+                <div>
+                    <h4 class="font-semibold text-gray-700 mb-3">4. Hoàn Thiện</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div><label class="text-xs">Dài Tường Ngăn</label><input type="number" id="ham_finish_xayNgan_dai" class="form-input text-sm"></div>
+                        <div><label class="text-xs">DT Ốp Lát</label><input type="number" id="ham_finish_opLat_area" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Dày Chống Thấm(mm)</label><input type="number" id="ham_waterproof_day" class="form-input text-sm" value="3"></div>
+                        <div><label class="text-xs">SL Hố Ga</label><input type="number" id="ham_drain_soLuong" class="form-input text-sm" value="4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="tab-tang1" class="tab-content hidden print-hide">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <h3 class="text-lg font-bold text-primary mb-4 border-b pb-2">Cấu Hình Tầng 1</h3>
+
+                <!-- 1. Kịch bản & Cột -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-3">1. Kết Cấu Tầng 1</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div class="col-span-1 md:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500">Kịch bản kết cấu (Nếu 1 tầng)</label>
+                            <select id="t1_houseScenario" class="form-input text-sm">
+                                <option value="multi-story">Nhà > 1 Tầng (Có sàn T2)</option>
+                                <option value="flat-roof-btct">Nhà 1 Tầng - Mái Bằng BTCT</option>
+                                <option value="sloped-roof-btct-tile">Nhà 1 Tầng - Mái Xéo BTCT</option>
+                                <option value="steel-roof-tile">Nhà 1 Tầng - Mái Tôn</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-gray-50 rounded border border-gray-200">
+                        <h5 class="text-xs font-bold mb-2">Cột Tầng 1</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div><label class="text-xs">SL Cột</label><input type="number" id="t1_cot_soLuong" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Dài</label><input type="number" id="t1_cot_dai" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Rộng</label><input type="number" id="t1_cot_rong" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Cao</label><input type="number" id="t1_cot_cao" class="form-input text-sm" placeholder="3.9"></div>
+                            <div><label class="text-xs">Thép SL</label><input type="number" id="t1_cot_thep_soluong" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Thép Φ</label><input type="number" id="t1_cot_thep_phi" class="form-input text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Tường & Hoàn Thiện -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-3">2. Tường & Hoàn Thiện</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div><label class="text-xs">Dài Tường Bao</label><input type="number" id="t1_tuong_tongDai" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Dài Tường Ngăn</label><input type="number" id="t1_tuong_tongDaiNgan" class="form-input text-sm"></div>
+                        <div><label class="text-xs">DT Cửa (m²)</label><input type="number" id="t1_dienTichCua" class="form-input text-sm"></div>
+                        <div><label class="text-xs">SL WC</label><input type="number" id="t1_vs_soLuong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Dài WC</label><input type="number" id="t1_vs_dai" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Rộng WC</label><input type="number" id="t1_vs_rong" class="form-input text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- 3. Sàn Trên (T2 hoặc Mái 1 Tầng) -->
+                <div id="t1_ceiling_params">
+                    <h4 class="font-semibold text-gray-700 mb-3">3. Kết Cấu Sàn Trên (Dầm/Sàn T2)</h4>
+                    <div class="p-3 bg-gray-50 rounded border border-gray-200 grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div><label class="text-xs">Dày Sàn</label><input type="number" id="t1_san_day" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Tổng Dài Dầm</label><input type="number" id="t1_san_tongDaiDam" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Rộng Dầm</label><input type="number" id="t1_san_rongDam" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Cao Dầm</label><input type="number" id="t1_san_caoDam" class="form-input text-sm"></div>
+
+                        <div><label class="text-xs">Thép Dầm SL</label><input type="number" id="t1_dam_thep_soluong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Thép Dầm Φ</label><input type="number" id="t1_dam_thep_phi" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Thép Sàn Φ</label><input type="number" id="t1_san_thep_phi" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Thép Sàn A</label><input type="number" id="t1_san_thep_a" class="form-input text-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="tab-tang2" class="tab-content hidden print-hide">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <h3 class="text-lg font-bold text-primary mb-4 border-b pb-2">Cấu Hình Tầng Điển Hình (T2 -> Áp Mái)</h3>
+                <div class="mb-4 p-3 bg-blue-50 text-blue-800 rounded text-sm">
+                    <strong>Lưu ý:</strong> Số lượng tầng điển hình sẽ được tính tự động (Tổng tầng - 2). Ví dụ nhà 4 tầng: T1 + T2, T3 (Điển hình x2) + Mái.
+                </div>
+
+                <!-- 1. Cột -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-3">1. Cột Điển Hình</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div><label class="text-xs">SL Cột</label><input type="number" id="t2_cot_soLuong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Dài</label><input type="number" id="t2_cot_dai" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Rộng</label><input type="number" id="t2_cot_rong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Cao</label><input type="number" id="t2_cot_cao" class="form-input text-sm" placeholder="3.4"></div>
+                        <div><label class="text-xs">Thép SL</label><input type="number" id="t2_cot_thep_soluong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Thép Φ</label><input type="number" id="t2_cot_thep_phi" class="form-input text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- 2. Tường -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-3">2. Tường & Hoàn Thiện</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div><label class="text-xs">Dài Tường Bao</label><input type="number" id="t2_tuong_tongDai" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Dài Tường Ngăn</label><input type="number" id="t2_tuong_tongDaiNgan" class="form-input text-sm"></div>
+                        <div><label class="text-xs">DT Cửa</label><input type="number" id="t2_dienTichCua" class="form-input text-sm"></div>
+                        <div><label class="text-xs">SL WC</label><input type="number" id="t2_vs_soLuong" class="form-input text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- 3. Sàn -->
+                <div>
+                    <h4 class="font-semibold text-gray-700 mb-3">3. Kết Cấu Sàn Trên (Dầm/Sàn)</h4>
+                    <div class="p-3 bg-gray-50 rounded border border-gray-200 grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div><label class="text-xs">Dày Sàn</label><input type="number" id="t2_san_day" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Tổng Dài Dầm</label><input type="number" id="t2_san_tongDaiDam" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Rộng Dầm</label><input type="number" id="t2_san_rongDam" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Cao Dầm</label><input type="number" id="t2_san_caoDam" class="form-input text-sm"></div>
+
+                        <div><label class="text-xs">Thép Dầm SL</label><input type="number" id="t2_dam_thep_soluong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Thép Dầm Φ</label><input type="number" id="t2_dam_thep_phi" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Thép Sàn Φ</label><input type="number" id="t2_san_thep_phi" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Thép Sàn A</label><input type="number" id="t2_san_thep_a" class="form-input text-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="tab-mai" class="tab-content hidden print-hide">
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <h3 class="text-lg font-bold text-primary mb-4 border-b pb-2">Cấu Hình Phần Mái</h3>
+
+                <!-- 1. Kịch bản Mái -->
+                <div class="mb-6">
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Loại Kết Cấu Mái</label>
+                    <select id="mai_roofScenario" class="form-input text-sm font-bold text-primary">
+                        <option value="flat-roof-btct">Mái Bằng BTCT (Sân Thượng)</option>
+                        <option value="sloped-roof-btct-tile">Mái Xéo BTCT + Lợp Ngói</option>
+                        <option value="steel-roof-tile">Mái Lợp Tôn (Xà Gồ Thép)</option>
+                    </select>
+                </div>
+
+                <!-- 2. Tầng Áp Mái -->
+                <div class="mb-6 border p-3 rounded bg-gray-50">
+                    <div class="flex items-center mb-3">
+                        <input type="checkbox" id="mai_apMai_enable" class="w-4 h-4 text-primary rounded">
+                        <label for="mai_apMai_enable" class="ml-2 text-sm font-bold text-gray-700">Có Tầng Áp Mái / Tum?</label>
+                    </div>
+                    <div id="mai_params_apMai" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div><label class="text-xs">Diện tích (m²)</label><input type="number" id="mai_apMai_dienTich" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Cao (m)</label><input type="number" id="mai_apMai_cao" class="form-input text-sm" value="3.0"></div>
+                        <div><label class="text-xs">SL Cột</label><input type="number" id="mai_apMai_cot_soLuong" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Cột Rộng (m)</label><input type="number" id="mai_apMai_cot_rong" class="form-input text-sm" value="0.2"></div>
+                        <div><label class="text-xs">Dài Tường 100</label><input type="number" id="mai_apMai_tongDaiTuong100" class="form-input text-sm"></div>
+                        <div><label class="text-xs">Dài Tường 200</label><input type="number" id="mai_apMai_tongDaiTuong200" class="form-input text-sm"></div>
+                        <div><label class="text-xs">DT Sàn WC</label><input type="number" id="mai_apMai_dienTichWC" class="form-input text-sm"></div>
+                    </div>
+                </div>
+
+                <!-- 3. Thông Số Mái Chính -->
+                <div id="mai_params_container">
+                    <!-- Mái Bằng -->
+                    <div id="mai_p_flat" class="p-3 border rounded mb-3">
+                        <h5 class="text-xs font-bold mb-2">Thông Số Mái Bằng BTCT</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div><label class="text-xs">Dày Sàn</label><input type="number" id="mai_flat_san_day" class="form-input text-sm" value="0.12"></div>
+                            <div><label class="text-xs">Cao Dầm</label><input type="number" id="mai_flat_san_caoDam" class="form-input text-sm" value="0.3"></div>
+                            <div><label class="text-xs">Cao Tường Bao</label><input type="number" id="mai_flat_xayBaoMai_cao" class="form-input text-sm" value="0.9"></div>
+                            <div><label class="text-xs">Hệ số Tôn Chống Nóng</label><input type="number" id="mai_flat_tonChongNong_heSo" class="form-input text-sm" value="1.0"></div>
+                        </div>
+                    </div>
+                    <!-- Mái Xéo -->
+                    <div id="mai_p_sloped" class="hidden p-3 border rounded mb-3">
+                        <h5 class="text-xs font-bold mb-2">Thông Số Mái Xéo BTCT</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div><label class="text-xs">Dày Sàn</label><input type="number" id="mai_sloped_san_day" class="form-input text-sm" value="0.10"></div>
+                            <div><label class="text-xs">Hệ số Lợp Ngói</label><input type="number" id="mai_sloped_dtLopNgua" class="form-input text-sm" value="1.5"></div>
+                        </div>
+                    </div>
+                    <!-- Mái Tôn -->
+                    <div id="mai_p_steel" class="hidden p-3 border rounded mb-3">
+                        <h5 class="text-xs font-bold mb-2">Thông Số Mái Tôn</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div><label class="text-xs">DT Mái Lợp</label><input type="number" id="mai_steel_maiTon_dienTich" class="form-input text-sm"></div>
+                            <div><label class="text-xs">Cao Tường Thu Hồi</label><input type="number" id="mai_steel_tuongTH_caoTB" class="form-input text-sm" value="1.5"></div>
+                            <div><label class="text-xs">Tỷ lệ Xà Gồ (kg/m²)</label><input type="number" id="mai_steel_xaGo_tietDien" class="form-input text-sm" value="15"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 flex gap-4 print-hide">
+            <button id="btnCalculate" class="flex-1 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-lg shadow transition">
+                TÍNH TOÁN DỰ TOÁN TỔNG HỢP
+            </button>
+            <button id="btnExport" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow transition">
+                Xuất Excel
+            </button>
+        </div>
+
+        <!-- Result -->
+        <div id="resultSection" class="mt-8 hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Bảng Dự Toán Chi Tiết</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 border text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-3 py-3 text-left font-bold text-gray-600">STT</th>
+                            <th class="px-3 py-3 text-left font-bold text-gray-600">Mã Hiệu</th>
+                            <th class="px-3 py-3 text-left font-bold text-gray-600">Hạng Mục</th>
+                            <th class="px-3 py-3 text-center font-bold text-gray-600">ĐV</th>
+                            <th class="px-3 py-3 text-right font-bold text-gray-600">Khối Lượng</th>
+                            <th class="px-3 py-3 text-right font-bold text-gray-600">ĐG VT</th>
+                            <th class="px-3 py-3 text-right font-bold text-gray-600">ĐG NC</th>
+                            <th class="px-3 py-3 text-right font-bold text-gray-600">ĐG Máy</th>
+                            <th class="px-3 py-3 text-right font-bold text-gray-600">Thành Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Data rows here -->
+                    </tbody>
+                    <tfoot class="bg-gray-50 font-bold">
+                        <tr>
+                            <td colspan="8" class="px-3 py-3 text-right">TỔNG CỘNG:</td>
+                            <td id="grandTotalDisplay" class="px-3 py-3 text-right text-primary">0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- HELPER FUNCTIONS ---
+        function getVal(id) {
+            const el = document.getElementById(id);
+            return el ? (parseFloat(el.value) || 0) : 0;
+        }
+        function setVal(id, val) {
+            const el = document.getElementById(id);
+            if(el) el.value = val;
+        }
+        function getSelectVal(id) {
+            const el = document.getElementById(id);
+            return el ? el.value : '';
+        }
+        function getSteelWeight(phi) {
+            if (phi <= 0) return 0;
+            return (phi * phi) * 0.00617;
+        }
+
+        // --- MODULE: FOUNDATION (MÓNG) ---
+        const FoundationManager = {
+            init: function() {
+                const typeSelect = document.getElementById('mong_foundationType');
+                if(typeSelect) {
+                    typeSelect.addEventListener('change', this.updateVisibility);
+                    this.updateVisibility();
+                }
+            },
+            updateVisibility: function() {
+                const type = document.getElementById('mong_foundationType').value;
+                const pDon = document.getElementById('mong_params_don');
+                const pBang = document.getElementById('mong_params_bang');
+
+                if (type === 'don') {
+                    pDon.classList.remove('hidden');
+                    pBang.classList.add('hidden');
+                } else {
+                    pDon.classList.add('hidden');
+                    pBang.classList.remove('hidden');
+                }
+            },
+            autoSuggest: function(area, floors, type) {
+                // Logic ported from phan-mong.html autoSuggestParameters
+                if (area === 0 || floors === 0) return;
+
+                let scaleFactor = 1.0;
+                if (type === 'biet-thu') scaleFactor = 1.1;
+                else if (type === 'khac') scaleFactor = 1.2;
+                const lengthScaleFactor = Math.sqrt(scaleFactor);
+
+                // Determine Foundation Type based on floors
+                let suggestedType = 'don';
+                if (floors >= 3 && floors <= 5) suggestedType = 'bang1p';
+                else if (floors > 5) suggestedType = 'bang2p';
+
+                const currentType = document.getElementById('mong_foundationType').value;
+                if(currentType !== suggestedType) {
+                    document.getElementById('mong_foundationType').value = suggestedType;
+                    this.updateVisibility();
+                }
+
+                // Calculations Base
+                const chieuRongNha_base = Math.max(4, Math.min(8, Math.sqrt(area / 3)));
+                const chieuDaiNha_base = area / chieuRongNha_base;
+                const chieuRongNha = chieuRongNha_base * lengthScaleFactor;
+                const chieuDaiNha = chieuDaiNha_base * lengthScaleFactor;
+                const chuVi = 2 * (chieuRongNha + chieuDaiNha);
+
+                const soTrucDoc = Math.max(2, Math.floor(chieuDaiNha_base / 4.5) + 1);
+                const soTrucNgang = Math.max(2, Math.floor(chieuRongNha_base / 4.5) + 1);
+                const soLuongCot = soTrucDoc * soTrucNgang;
+                const tongDaiGiang = (soTrucNgang * chieuDaiNha) + (soTrucDoc * chieuRongNha);
+
+                // Set Values
+                setVal('mong_dienTichLanTrai', (15 * scaleFactor).toFixed(0));
+                setVal('mong_chieuSauChonMong', (1.2 + (floors * 0.1)).toFixed(2));
+
+                // Co Mong
+                const cotTietDien = (floors <= 3 ? 0.2 : (floors <= 5 ? 0.22 : 0.25)) * lengthScaleFactor;
+                setVal('mong_cm_soLuong', soLuongCot.toFixed(0));
+                setVal('mong_cm_dai', cotTietDien.toFixed(2));
+                setVal('mong_cm_rong', cotTietDien.toFixed(2));
+                setVal('mong_cm_cao', 0.8);
+                // Thep Co Mong
+                setVal('mong_cm_thep_chu_soluong', (floors <= 2 ? 4 : 6));
+                setVal('mong_cm_thep_chu_phi', (floors <= 2 ? 16 : 18));
+
+                // Giang Mong
+                const giangCao = floors <= 3 ? 0.3 : (floors <= 5 ? 0.4 : 0.5);
+                setVal('mong_gm_tongDai', tongDaiGiang.toFixed(1));
+                setVal('mong_gm_rong', cotTietDien.toFixed(2));
+                setVal('mong_gm_cao', giangCao);
+                setVal('mong_gm_thep_chu_soluong', 4);
+                setVal('mong_gm_thep_chu_phi', (floors <= 3 ? 16 : 18));
+
+                // Mong Don Params
+                const ktMong = (1.0 + (floors * 0.15)) * lengthScaleFactor;
+                setVal('mong_md_soLuong', soLuongCot.toFixed(0));
+                setVal('mong_md_dai', ktMong.toFixed(2));
+                setVal('mong_md_rong', ktMong.toFixed(2));
+                setVal('mong_md_day', 0.3); // Fixed
+                setVal('mong_md_thep_ra_phi', 14);
+                setVal('mong_md_thep_ra_a', 150);
+
+                // Mong Bang Params
+                const mbRong = (0.9 + (floors * 0.1)) * lengthScaleFactor;
+                setVal('mong_mb_tongDai', tongDaiGiang.toFixed(1)); // Approx
+                setVal('mong_mb_rong', mbRong.toFixed(2));
+                setVal('mong_mb_day', 0.3);
+                setVal('mong_mb_thep_ra_phi', 14);
+                setVal('mong_mb_thep_ra_a', 150);
+                setVal('mong_mb_thep_dam_soluong', 6);
+                setVal('mong_mb_thep_dam_phi', 18);
+
+                // Be phot
+                const bthVol = Math.max(5, (floors * 2.5)) * scaleFactor;
+                setVal('mong_bth_soLuong', 1);
+                setVal('mong_bth_dai', (bthVol / (1.5 * 1.6)).toFixed(1));
+                setVal('mong_bth_rong', 1.5);
+                setVal('mong_bth_cao', 1.6);
+            },
+            calculate: function() {
+                const type = getSelectVal('mong_foundationType');
+                let items = [];
+
+                // Helper to add item
+                const addItem = (code, name, unit, qty, priceVT, priceNC, priceM) => {
+                    if(qty > 0) items.push({ code, name, unit, qty, priceVT, priceNC, priceM });
+                };
+
+                // 1. Earthwork
+                const sau = getVal('mong_chieuSauChonMong');
+                let klDao = 0, klBTLot = 0, klVK = 0, klBT = 0, klThep = 0;
+
+                if(type === 'don') {
+                    const sl = getVal('mong_md_soLuong');
+                    const d = getVal('mong_md_dai');
+                    const r = getVal('mong_md_rong');
+                    const h = getVal('mong_md_day');
+                    const phi = getVal('mong_md_thep_ra_phi');
+                    const a = getVal('mong_md_thep_ra_a') / 1000;
+
+                    klDao = sl * (d+0.2)*(r+0.2) * sau; // Simplified excavation
+                    klBTLot = sl * (d+0.2)*(r+0.2) * 0.1;
+                    klBT = sl * d * r * h;
+                    klVK = sl * 2 * (d+r) * h;
+
+                    // Steel calc
+                    if(phi > 0 && a > 0) {
+                        const len1 = (d / a) * r * getSteelWeight(phi); // One direction
+                        const len2 = (r / a) * d * getSteelWeight(phi); // Other direction
+                        klThep = (len1 + len2) * sl / 1000; // Tons
+                    }
+                } else {
+                    // Bang
+                    const l = getVal('mong_mb_tongDai');
+                    const r = getVal('mong_mb_rong');
+                    const h = getVal('mong_mb_day');
+
+                    klDao = l * (r+0.2) * sau;
+                    klBTLot = l * (r+0.2) * 0.1;
+                    klBT = l * r * h;
+                    klVK = l * 2 * h; // 2 sides
+                    // Steel (Approx 120kg/m3 for Bang)
+                    klThep = klBT * 120 / 1000;
+                }
+
+                addItem('AB.21120', 'Đào đất hố móng', 'm³', klDao, 6500, 26000, 32500);
+                addItem('AF.11110', 'Bê tông lót móng M100', 'm³', klBTLot, 1020000, 180000, 0);
+                addItem('AF.41110', 'Bê tông móng M250', 'm³', klBT, 1360000, 190000, 50000);
+                addItem('AF.21110', 'Ván khuôn móng', '100m²', klVK/100, 7500000, 7500000, 0);
+                addItem('AF.31110', 'Cốt thép móng', 'tấn', klThep, 18000000, 3500000, 0);
+
+                // 2. Co Mong
+                const cm_sl = getVal('mong_cm_soLuong');
+                const cm_d = getVal('mong_cm_dai');
+                const cm_r = getVal('mong_cm_rong');
+                const cm_h = getVal('mong_cm_cao');
+                const cm_vol = cm_sl * cm_d * cm_r * cm_h;
+                const cm_vk = cm_sl * 2 * (cm_d + cm_r) * cm_h;
+                // Steel approx 200kg/m3
+                const cm_steel = cm_vol * 200 / 1000;
+
+                addItem('AF.42110', 'Bê tông cổ móng M250', 'm³', cm_vol, 1445000, 205000, 50000);
+                addItem('AF.22110', 'Ván khuôn cổ móng', '100m²', cm_vk/100, 9000000, 9000000, 0);
+                addItem('AF.32110', 'Cốt thép cổ móng', 'tấn', cm_steel, 18000000, 3500000, 0);
+
+                // 3. Giang Mong
+                const gm_l = getVal('mong_gm_tongDai');
+                const gm_r = getVal('mong_gm_rong');
+                const gm_h = getVal('mong_gm_cao');
+                const gm_vol = gm_l * gm_r * gm_h;
+                const gm_vk = gm_l * 2 * gm_h; // 2 sides
+                const gm_steel = gm_vol * 180 / 1000;
+
+                addItem('AF.43110', 'Bê tông giằng móng M250', 'm³', gm_vol, 1445000, 205000, 50000);
+                addItem('AF.23110', 'Ván khuôn giằng móng', '100m²', gm_vk/100, 8500000, 8500000, 0);
+                addItem('AF.33110', 'Cốt thép giằng móng', 'tấn', gm_steel, 18000000, 3500000, 0);
+
+                return items;
+            }
+        };
+
+        // --- MODULE: BASEMENT (TẦNG HẦM) ---
+        const BasementManager = {
+            init: function() {
+                const typeSelect = document.getElementById('ham_foundationType');
+                if(typeSelect) {
+                    typeSelect.addEventListener('change', this.updateVisibility);
+                    this.updateVisibility();
+                }
+            },
+            updateVisibility: function() {
+                const type = getSelectVal('ham_foundationType');
+                ['don', 'bang', 'be'].forEach(t => {
+                    const el = document.getElementById('ham_p_' + t);
+                    if(el) el.classList.toggle('hidden', t !== type);
+                });
+            },
+            autoSuggest: function(area, floors, type) {
+                // Logic based on tang-ham.html
+                if (area === 0 || floors === 0) return;
+                let scale = (type === 'biet-thu' ? 1.1 : (type === 'khac' ? 1.2 : 1.0));
+                const lenScale = Math.sqrt(scale);
+
+                // Base dimensions
+                const W = Math.max(4, Math.min(8, Math.sqrt(area / 3))) * lenScale;
+                const L = (area / W);
+                const chuVi = 2 * (W + L);
+
+                // Columns
+                const cols = Math.max(4, Math.round(12 * area / 100));
+                setVal('ham_cot_soLuong', cols);
+                const colSize = (0.2 + (floors * 0.02)) * lenScale;
+                setVal('ham_cot_dai', colSize.toFixed(2));
+                setVal('ham_cot_rong', colSize.toFixed(2));
+
+                // Foundation Type Suggestion
+                const depth = 2.5; // Default suggest
+                let fType = 'don';
+                if (floors >= 6) fType = 'be';
+                else if (floors >= 3 && depth > 3) fType = 'bang';
+
+                const curF = document.getElementById('ham_foundationType');
+                if(curF && curF.value !== fType) {
+                    curF.value = fType;
+                    this.updateVisibility();
+                }
+
+                // Fill Params
+                setVal('ham_basementDepth', depth);
+
+                // Mong Don
+                setVal('ham_md_soLuong', cols);
+                setVal('ham_md_dai', (2.0 * lenScale).toFixed(2));
+                setVal('ham_md_rong', (2.0 * lenScale).toFixed(2));
+                setVal('ham_md_day', 0.8);
+                setVal('ham_md_giang_chieuDai', chuVi.toFixed(1));
+                setVal('ham_md_giang_tietDien', 0.25);
+
+                // Mong Bang
+                setVal('ham_mb_tongDai', (chuVi * 1.5).toFixed(1));
+                setVal('ham_mb_rongBan', (1.0 + depth*0.05).toFixed(2));
+                setVal('ham_mb_dayBan', 0.4);
+                setVal('ham_mb_giang_tietDien', 0.3);
+
+                // Mong Be
+                setVal('ham_mbe_dienTich', area.toFixed(2));
+                setVal('ham_mbe_day', 0.25);
+                setVal('ham_mbe_dam_tongDai', (chuVi * 1.5).toFixed(1));
+                setVal('ham_mbe_dam_rong', 0.5);
+                setVal('ham_mbe_dam_cao', 0.8);
+
+                // Wall/Floor
+                setVal('ham_wall_day', 0.2);
+                setVal('ham_floor_day', 0.2);
+
+                // Beams/Stairs
+                setVal('ham_dam_tongDai', (chuVi * 1.5).toFixed(1));
+                setVal('ham_dam_rong', 0.2);
+                setVal('ham_dam_cao', 0.35);
+
+                // Finish
+                setVal('ham_finish_xayNgan_dai', (chuVi/4).toFixed(1));
+                setVal('ham_finish_opLat_area', area.toFixed(1));
+            },
+            calculate: function() {
+                const isActive = document.getElementById('global_hasBasement').checked;
+                if (!isActive) return [];
+
+                let items = [];
+                const addItem = (code, name, unit, qty, priceVT, priceNC, priceM) => {
+                    if(qty > 0) items.push({ code, name, unit, qty, priceVT, priceNC, priceM });
+                };
+
+                const area = getVal('constructionArea'); // Fallback if needed
+                const depth = getVal('ham_basementDepth');
+                const fType = getSelectVal('ham_foundationType');
+                const chuVi = 2 * (Math.sqrt(area)*2 + Math.sqrt(area)/2); // Rough approx if needed, but we used autoSuggest values
+
+                // 1. Excavation
+                // Simplified: Area * Depth
+                const vDao = area * depth * 1.3; // +30% working space
+                addItem('AB.21120', 'Đào đất tầng hầm', 'm³', vDao, 6500, 26000, 32500);
+                addItem('AB.41110', 'Vận chuyển đất', 'm³', vDao, 11000, 16500, 27500);
+
+                // 2. Foundation
+                let vBT = 0, vVK = 0, vThep = 0;
+
+                if (fType === 'don') {
+                    const n = getVal('ham_md_soLuong');
+                    const vOne = getVal('ham_md_dai') * getVal('ham_md_rong') * getVal('ham_md_day');
+                    vBT = n * vOne;
+                    vVK = n * 2 * (getVal('ham_md_dai') + getVal('ham_md_rong')) * getVal('ham_md_day');
+                    vThep = vBT * 150 / 1000; // 150kg/m3
+
+                    // Giang
+                    const lg = getVal('ham_md_giang_chieuDai');
+                    const sg = getVal('ham_md_giang_tietDien');
+                    const vg = lg * sg * sg; // Square section assumption
+                    addItem('AF.43110', 'BT Giằng Móng Hầm', 'm³', vg, 1445000, 205000, 50000);
+                    addItem('AF.33110', 'Thép Giằng Hầm', 'tấn', vg*180/1000, 18000000, 3500000, 0);
+                } else if (fType === 'bang') {
+                    const l = getVal('ham_mb_tongDai');
+                    const r = getVal('ham_mb_rongBan');
+                    const h = getVal('ham_mb_dayBan');
+                    vBT = l * r * h;
+                    vVK = l * 2 * h;
+                    vThep = vBT * 120 / 1000;
+                } else { // Be
+                    const aBe = getVal('ham_mbe_dienTich');
+                    const h = getVal('ham_mbe_day');
+                    vBT = aBe * h;
+                    vVK = Math.sqrt(aBe)*4 * h;
+                    vThep = vBT * 100 / 1000;
+
+                    // Dam Be
+                    const ld = getVal('ham_mbe_dam_tongDai');
+                    const rd = getVal('ham_mbe_dam_rong');
+                    const hd = getVal('ham_mbe_dam_cao');
+                    const vd = ld * rd * hd;
+                    addItem('AF.43110', 'BT Dầm Móng Bè', 'm³', vd, 1445000, 205000, 50000);
+                    addItem('AF.33110', 'Thép Dầm Bè', 'tấn', vd*200/1000, 18000000, 3500000, 0);
+                }
+
+                addItem('AF.41110', 'Bê tông Móng Hầm', 'm³', vBT, 1360000, 190000, 50000);
+                addItem('AF.21110', 'Ván khuôn Móng Hầm', '100m²', vVK/100, 7500000, 7500000, 0);
+                addItem('AF.31110', 'Thép Móng Hầm', 'tấn', vThep, 18000000, 3500000, 0);
+
+                // 3. Wall & Floor
+                // Wall area approx
+                const p = Math.sqrt(area)*4;
+                const hWall = depth;
+                const tWall = getVal('ham_wall_day');
+                const vWall = p * hWall * tWall;
+                addItem('AF.42110', 'Bê tông Vách Hầm', 'm³', vWall, 1500000, 250000, 60000);
+                addItem('AF.22110', 'VK Vách Hầm', '100m²', (p*hWall*2)/100, 9500000, 9500000, 0);
+                addItem('AF.32110', 'Thép Vách Hầm', 'tấn', vWall*160/1000, 17800000, 3500000, 0);
+
+                // Floor (if not Be)
+                if (fType !== 'be') {
+                    const tFloor = getVal('ham_floor_day');
+                    const vFloor = area * tFloor;
+                    addItem('AF.42120', 'Bê tông Sàn Hầm', 'm³', vFloor, 1500000, 250000, 60000);
+                    addItem('AF.32120', 'Thép Sàn Hầm', 'tấn', vFloor*120/1000, 17500000, 3000000, 0);
+                }
+
+                // 4. Columns & Beams
+                const c_sl = getVal('ham_cot_soLuong');
+                const c_v = c_sl * getVal('ham_cot_dai') * getVal('ham_cot_rong') * depth;
+                addItem('AD.41111', 'Bê tông Cột Hầm', 'm³', c_v, 1445000, 205000, 50000);
+                addItem('AD.31111', 'Thép Cột Hầm', 'tấn', c_v*200/1000, 18000000, 3500000, 0);
+
+                const d_l = getVal('ham_dam_tongDai');
+                const d_v = d_l * getVal('ham_dam_rong') * getVal('ham_dam_cao');
+                addItem('AD.41112', 'Bê tông Dầm Sàn Hầm', 'm³', d_v, 1445000, 205000, 50000);
+                addItem('AD.31112', 'Thép Dầm Hầm', 'tấn', d_v*180/1000, 17500000, 3200000, 0);
+
+                // 5. Finish
+                const aOp = getVal('ham_finish_opLat_area');
+                addItem('AG.41110', 'Ốp lát nền Hầm', 'm²', aOp, 150000, 40000, 0);
+                const lNgan = getVal('ham_finish_xayNgan_dai');
+                addItem('AE.21110', 'Xây tường ngăn Hầm', 'm³', lNgan * 3.0 * 0.1, 920000, 400000, 0);
+                const tWater = getVal('ham_waterproof_day');
+                // Waterproofing
+                addItem('AG.51110', 'Chống thấm Vách/Sàn Hầm', 'm²', (p*depth + area), 120000, 60000, 0);
+
+                return items;
+            }
+        };
+
+        // --- MODULE: FLOOR 1 (TẦNG 1) ---
+        const Floor1Manager = {
+            autoSuggest: function(area, floors, type) {
+                if(area===0) return;
+                let scale = (type === 'biet-thu' ? 1.1 : (type === 'khac' ? 1.2 : 1.0));
+                const lenScale = Math.sqrt(scale);
+
+                // Scenario
+                const scenEl = document.getElementById('t1_houseScenario');
+                if(floors > 1) {
+                    scenEl.value = 'multi-story';
+                    // scenEl.disabled = true; // Let user change if they want weird config
+                } else {
+                    // Default 1 story
+                    if(scenEl.value === 'multi-story') scenEl.value = 'flat-roof-btct';
+                }
+
+                // Dims
+                const W = Math.max(4, Math.min(8, Math.sqrt(area / 3))) * lenScale;
+                const L = area / W;
+                const chuVi = 2 * (W + L);
+
+                // Cols
+                const cols = Math.max(4, Math.round(12 * area / 100));
+                setVal('t1_cot_soLuong', cols);
+                const colSize = (0.2 + (floors > 3 ? 0.05 : 0)) * lenScale;
+                setVal('t1_cot_dai', colSize.toFixed(2));
+                setVal('t1_cot_rong', colSize.toFixed(2));
+                setVal('t1_cot_cao', 3.9); // T1 usually higher
+                setVal('t1_cot_thep_soluong', (floors > 2 ? 6 : 4));
+                setVal('t1_cot_thep_phi', (floors > 2 ? 18 : 16));
+
+                // Walls
+                setVal('t1_tuong_tongDai', chuVi.toFixed(1));
+                setVal('t1_tuong_tongDaiNgan', (chuVi/2).toFixed(1));
+                setVal('t1_dienTichCua', (area*0.15).toFixed(1));
+
+                // WC
+                setVal('t1_vs_soLuong', 1);
+                setVal('t1_vs_dai', 2); setVal('t1_vs_rong', 2);
+
+                // Slab T2 (Ceiling)
+                setVal('t1_san_day', 0.12);
+                setVal('t1_san_tongDaiDam', (chuVi*1.5).toFixed(1));
+                setVal('t1_san_rongDam', 0.2);
+                setVal('t1_san_caoDam', (floors > 2 ? 0.35 : 0.3));
+                setVal('t1_dam_thep_soluong', 6);
+                setVal('t1_dam_thep_phi', 18);
+                setVal('t1_san_thep_phi', 10);
+                setVal('t1_san_thep_a', 150);
+            },
+            calculate: function() {
+                const scen = getSelectVal('t1_houseScenario');
+                const items = [];
+                const addItem = (code, name, unit, qty, priceVT, priceNC, priceM) => {
+                    if(qty > 0) items.push({ code, name, unit, qty, priceVT, priceNC, priceM });
+                };
+
+                // 1. Columns T1
+                const c_sl = getVal('t1_cot_soLuong');
+                const c_v = c_sl * getVal('t1_cot_dai') * getVal('t1_cot_rong') * getVal('t1_cot_cao');
+                const c_vk = c_sl * 2 * (getVal('t1_cot_dai') + getVal('t1_cot_rong')) * getVal('t1_cot_cao');
+                // Steel approx 200kg/m3
+                addItem('AC.41110', 'Bê tông Cột T1', 'm³', c_v, 1445000, 205000, 50000);
+                addItem('AC.21110', 'Ván khuôn Cột T1', '100m²', c_vk/100, 9000000, 9000000, 0);
+                addItem('AC.31110', 'Cốt thép Cột T1', 'tấn', c_v*200/1000, 18000000, 3500000, 0);
+
+                // 2. Walls T1
+                const hTuong = getVal('t1_cot_cao') - getVal('t1_san_caoDam'); // Minus beam
+                const lTuong = getVal('t1_tuong_tongDai');
+                const lNgan = getVal('t1_tuong_tongDaiNgan');
+                const aCua = getVal('t1_dienTichCua');
+
+                const vXay200 = (lTuong * hTuong - aCua) * 0.2;
+                const vXay100 = (lNgan * hTuong) * 0.1;
+
+                addItem('AE.21110', 'Xây tường bao T1 (200)', 'm³', vXay200, 880000, 380000, 0);
+                addItem('AE.21110', 'Xây tường ngăn T1 (100)', 'm³', vXay100, 920000, 400000, 0);
+
+                // Plastering (simplified)
+                const aTo = (lTuong + lNgan) * hTuong * 2 - aCua*2;
+                addItem('AG.11110', 'Trát tường T1', 'm²', aTo, 32000, 48000, 0);
+
+                // 3. Slab T2 (If Multi-story) OR Roof Slab (if Flat Roof 1 story)
+                // If 1-story steel roof, skip slab calculation here?
+                // phan-tang-1 includes logic for this.
+                if(scen === 'multi-story' || scen === 'flat-roof-btct' || scen === 'sloped-roof-btct-tile') {
+                    const area = getVal('constructionArea');
+                    const d_l = getVal('t1_san_tongDaiDam');
+                    const d_v = d_l * getVal('t1_san_rongDam') * getVal('t1_san_caoDam');
+                    const s_v = area * getVal('t1_san_day');
+
+                    addItem('AD.41111', 'Bê tông Dầm Sàn T1(T2)', 'm³', d_v + s_v, 1445000, 205000, 50000);
+                    addItem('AD.21111', 'Ván khuôn Dầm Sàn T1', '100m²', area*1.1/100, 8500000, 8500000, 0);
+                    addItem('AD.31111', 'Thép Dầm Sàn T1', 'tấn', (d_v+s_v)*150/1000, 18000000, 3500000, 0);
+                }
+
+                // 4. Finish
+                addItem('AG.41110', 'Ốp lát nền T1', 'm²', getVal('constructionArea'), 150000, 40000, 0);
+
+                return items;
+            }
+        };
+
+        // --- MODULE: TYPICAL FLOOR (TẦNG ĐIỂN HÌNH) ---
+        const TypicalFloorManager = {
+            autoSuggest: function(area, floors, type) {
+                if(area===0) return;
+                let scale = (type === 'biet-thu' ? 1.1 : (type === 'khac' ? 1.2 : 1.0));
+                const lenScale = Math.sqrt(scale);
+
+                // Dims
+                const W = Math.max(4, Math.min(8, Math.sqrt(area / 3))) * lenScale;
+                const L = area / W;
+                const chuVi = 2 * (W + L);
+
+                // Cols
+                const cols = Math.max(4, Math.round(12 * area / 100));
+                setVal('t2_cot_soLuong', cols);
+                const colSize = (0.2) * lenScale; // Upper floors smaller cols
+                setVal('t2_cot_dai', colSize.toFixed(2));
+                setVal('t2_cot_rong', colSize.toFixed(2));
+                setVal('t2_cot_cao', 3.4);
+                setVal('t2_cot_thep_soluong', 4);
+                setVal('t2_cot_thep_phi', 16);
+
+                // Walls
+                setVal('t2_tuong_tongDai', chuVi.toFixed(1));
+                setVal('t2_tuong_tongDaiNgan', (chuVi/2).toFixed(1));
+                setVal('t2_dienTichCua', (area*0.15).toFixed(1));
+
+                // WC
+                setVal('t2_vs_soLuong', Math.ceil(area/50));
+
+                // Slab
+                setVal('t2_san_day', 0.12);
+                setVal('t2_san_tongDaiDam', (chuVi*1.5).toFixed(1));
+                setVal('t2_san_rongDam', 0.2);
+                setVal('t2_san_caoDam', 0.3);
+                setVal('t2_dam_thep_soluong', 6);
+                setVal('t2_dam_thep_phi', 18);
+                setVal('t2_san_thep_phi', 10);
+                setVal('t2_san_thep_a', 150);
+            },
+            calculate: function() {
+                const floors = parseInt(document.getElementById('global_floors').value) || 1;
+                // Count = Floors - 2. (Ex: 3 Floors -> T1, T2(Typ), Roof. Count=1)
+                // If Floors < 3, Count = 0.
+                const count = Math.max(0, floors - 2);
+                if (count === 0) return [];
+
+                const items = [];
+                const addItem = (code, name, unit, qty, priceVT, priceNC, priceM) => {
+                    if(qty > 0) items.push({ code, name, unit, qty, priceVT, priceNC, priceM });
+                };
+
+                // 1. Columns
+                const c_sl = getVal('t2_cot_soLuong');
+                const c_v = c_sl * getVal('t2_cot_dai') * getVal('t2_cot_rong') * getVal('t2_cot_cao');
+                const c_vk = c_sl * 2 * (getVal('t2_cot_dai') + getVal('t2_cot_rong')) * getVal('t2_cot_cao');
+
+                addItem('AC.41120', 'Bê tông Cột Điển Hình', 'm³', c_v * count, 1445000, 205000, 50000);
+                addItem('AC.21120', 'Ván khuôn Cột Điển Hình', '100m²', (c_vk * count)/100, 9000000, 9000000, 0);
+                addItem('AC.31120', 'Cốt thép Cột Điển Hình', 'tấn', (c_v*200/1000) * count, 18000000, 3500000, 0);
+
+                // 2. Walls
+                const hTuong = getVal('t2_cot_cao') - getVal('t2_san_caoDam');
+                const vXay200 = (getVal('t2_tuong_tongDai') * hTuong - getVal('t2_dienTichCua')) * 0.2;
+                const vXay100 = (getVal('t2_tuong_tongDaiNgan') * hTuong) * 0.1;
+
+                addItem('AE.21120', 'Xây tường bao (200)', 'm³', vXay200 * count, 880000, 380000, 0);
+                addItem('AE.21120', 'Xây tường ngăn (100)', 'm³', vXay100 * count, 920000, 400000, 0);
+
+                const aTo = (getVal('t2_tuong_tongDai') + getVal('t2_tuong_tongDaiNgan')) * hTuong * 2;
+                addItem('AG.11110', 'Trát tường Điển Hình', 'm²', aTo * count, 32000, 48000, 0);
+
+                // 3. Slab
+                const area = getVal('constructionArea'); // Assume same area
+                const d_v = getVal('t2_san_tongDaiDam') * getVal('t2_san_rongDam') * getVal('t2_san_caoDam');
+                const s_v = area * getVal('t2_san_day');
+
+                addItem('AD.41121', 'Bê tông Dầm Sàn Điển Hình', 'm³', (d_v + s_v) * count, 1445000, 205000, 50000);
+                addItem('AD.21121', 'Ván khuôn Dầm Sàn Điển Hình', '100m²', (area*1.1 * count)/100, 8500000, 8500000, 0);
+                addItem('AD.31121', 'Thép Dầm Sàn Điển Hình', 'tấn', ((d_v+s_v)*150/1000) * count, 18000000, 3500000, 0);
+
+                // 4. Finish
+                addItem('AG.41110', 'Ốp lát nền Điển Hình', 'm²', area * count, 150000, 40000, 0);
+
+                return items;
+            }
+        };
+
+        // --- MODULE: ROOF (MÁI) ---
+        const RoofManager = {
+            init: function() {
+                const scen = document.getElementById('mai_roofScenario');
+                if(scen) {
+                    scen.addEventListener('change', this.updateVisibility);
+                    this.updateVisibility();
+                }
+            },
+            updateVisibility: function() {
+                const scen = getSelectVal('mai_roofScenario');
+                const pFlat = document.getElementById('mai_p_flat');
+                const pSloped = document.getElementById('mai_p_sloped');
+                const pSteel = document.getElementById('mai_p_steel');
+
+                if(pFlat) pFlat.classList.add('hidden');
+                if(pSloped) pSloped.classList.add('hidden');
+                if(pSteel) pSteel.classList.add('hidden');
+
+                if(scen === 'flat-roof-btct') pFlat.classList.remove('hidden');
+                else if(scen === 'sloped-roof-btct-tile') pSloped.classList.remove('hidden');
+                else if(scen === 'steel-roof-tile') pSteel.classList.remove('hidden');
+            },
+            autoSuggest: function(area, floors, type) {
+                if(area===0) return;
+                let scale = (type === 'biet-thu' ? 1.1 : (type === 'khac' ? 1.2 : 1.0));
+                const lenScale = Math.sqrt(scale);
+                const W = Math.max(4, Math.min(8, Math.sqrt(area / 3))) * lenScale;
+                const L = area / W;
+                const chuVi = 2 * (W + L);
+
+                // Ap Mai
+                setVal('mai_apMai_dienTich', (area * 0.5).toFixed(1)); // Tum 50%
+                setVal('mai_apMai_cao', 3.0);
+                setVal('mai_apMai_cot_soLuong', 4);
+                setVal('mai_apMai_cot_rong', 0.2);
+                setVal('mai_apMai_tongDaiTuong100', 10);
+                setVal('mai_apMai_tongDaiTuong200', (Math.sqrt(area*0.5)*4).toFixed(1));
+                setVal('mai_apMai_dienTichWC', 0); // Default no WC on roof
+
+                // Flat
+                setVal('mai_flat_san_day', 0.12);
+                setVal('mai_flat_san_caoDam', 0.3);
+                setVal('mai_flat_xayBaoMai_cao', 0.9);
+                setVal('mai_flat_tonChongNong_heSo', 1.0);
+
+                // Sloped
+                setVal('mai_sloped_dtLopNgua', 1.5);
+
+                // Steel
+                setVal('mai_steel_maiTon_dienTich', (area * 1.2).toFixed(1));
+                setVal('mai_steel_tuongTH_caoTB', 1.5);
+                setVal('mai_steel_xaGo_tietDien', 15);
+            },
+            calculate: function() {
+                const scen = getSelectVal('mai_roofScenario');
+                const hasApMai = document.getElementById('mai_apMai_enable').checked;
+                const area = getVal('constructionArea');
+                const items = [];
+                const addItem = (code, name, unit, qty, priceVT, priceNC, priceM) => {
+                    if(qty > 0) items.push({ code, name, unit, qty, priceVT, priceNC, priceM });
+                };
+
+                // 1. Ap Mai (Tum)
+                if (hasApMai) {
+                    const am_sl = getVal('mai_apMai_cot_soLuong');
+                    const am_r = getVal('mai_apMai_cot_rong');
+                    const am_h = getVal('mai_apMai_cao');
+                    const vCol = am_sl * am_r * am_r * am_h;
+                    addItem('AC.41110', 'Bê tông Cột Áp Mái', 'm³', vCol, 1445000, 205000, 50000);
+                    addItem('AC.21110', 'Ván khuôn Cột Áp Mái', '100m²', (am_sl*4*am_r*am_h)/100, 9000000, 9000000, 0);
+                    addItem('AC.31110', 'Thép Cột Áp Mái', 'tấn', vCol*180/1000, 18000000, 3500000, 0);
+
+                    const l200 = getVal('mai_apMai_tongDaiTuong200');
+                    const l100 = getVal('mai_apMai_tongDaiTuong100');
+                    addItem('AE.21120', 'Xây tường bao Áp Mái (200)', 'm³', l200*am_h*0.2, 880000, 380000, 0);
+                    addItem('AE.21120', 'Xây tường ngăn Áp Mái (100)', 'm³', l100*am_h*0.1, 920000, 400000, 0);
+
+                    // Finish Ap Mai
+                    const am_area = getVal('mai_apMai_dienTich');
+                    addItem('AG.41110', 'Ốp lát nền Áp Mái', 'm²', am_area, 150000, 40000, 0);
+                }
+
+                // 2. Roof Structure
+                if (scen === 'flat-roof-btct') {
+                    // Slab & Beam
+                    const hSlan = getVal('mai_flat_san_day');
+                    const vSlab = area * hSlan;
+                    // Approx Beam Vol ~ 20% of Slab or based on perimeter?
+                    // Simplified: Beam = Perimeter * 0.2 * 0.3
+                    const peri = Math.sqrt(area)*4;
+                    const vBeam = peri * 0.2 * getVal('mai_flat_san_caoDam');
+
+                    addItem('AD.41111', 'Bê tông Dầm Sàn Mái', 'm³', vSlab+vBeam, 1445000, 205000, 50000);
+                    addItem('AD.21111', 'Ván khuôn Dầm Sàn Mái', '100m²', area*1.1/100, 9500000, 9500000, 0);
+                    addItem('AD.31111', 'Thép Dầm Sàn Mái', 'tấn', (vSlab+vBeam)*150/1000, 18000000, 3500000, 0);
+
+                    // Parapet
+                    const hPara = getVal('mai_flat_xayBaoMai_cao');
+                    addItem('AE.21130', 'Xây tường bao mái', 'm³', peri * hPara * 0.2, 880000, 380000, 0);
+
+                    // Waterproof & Ton
+                    addItem('AG.51110', 'Chống thấm Sàn Mái', 'm²', area * getVal('mai_flat_chongTham_heSo'), 120000, 60000, 0);
+                    addItem('CA.13110', 'Lợp tôn chống nóng (trên sàn BT)', 'm²', area * getVal('mai_flat_tonChongNong_heSo'), 140000, 40000, 0);
+
+                } else if (scen === 'sloped-roof-btct-tile') {
+                    // Sloped Slab
+                    const hSlan = getVal('mai_sloped_san_day');
+                    const coeff = getVal('mai_sloped_dtLopNgua'); // 1.5 usually
+                    const vSlab = area * coeff * hSlan;
+
+                    addItem('AD.41111', 'Bê tông Mái Xéo', 'm³', vSlab, 1500000, 250000, 60000);
+                    addItem('AD.21111', 'Ván khuôn Mái Xéo', '100m²', (area*coeff)/100, 12000000, 12000000, 0);
+                    addItem('AD.31111', 'Thép Mái Xéo', 'tấn', vSlab*130/1000, 18000000, 3500000, 0);
+
+                    // Tiles
+                    addItem('CA.21110', 'Lợp ngói Mái Xéo', 'm²', area * coeff, 80000, 90000, 0);
+
+                } else if (scen === 'steel-roof-tile') {
+                    // Steel Structure
+                    const aMai = getVal('mai_steel_maiTon_dienTich');
+                    const kgXaGo = aMai * getVal('mai_steel_xaGo_tietDien');
+                    addItem('CA.11120', 'Hệ Xà Gồ Thép Mái', 'tấn', kgXaGo/1000, 15000000, 10000000, 0);
+                    addItem('CA.13120', 'Lợp Tôn Mái', 'm²', aMai, 110000, 55000, 0);
+
+                    // Tuong Thu Hoi
+                    const hTH = getVal('mai_steel_tuongTH_caoTB');
+                    const peri = Math.sqrt(area)*4;
+                    // Assume wall on 2 sides (gable) -> width * hTH * 0.5 * 2? Or simplified
+                    // Simplified: 2 walls of length Width.
+                    const width = Math.sqrt(area/3)*1; // approx
+                    addItem('AE.21140', 'Xây tường thu hồi', 'm³', width * 2 * hTH * 0.2, 880000, 380000, 0);
+                }
+
+                return items;
+            }
+        };
+
+        // --- GLOBAL ORCHESTRATOR ---
+        const GlobalManager = {
+            init: function() {
+                // Attach Global Events
+                ['global_area', 'global_floors', 'global_projectType'].forEach(id => {
+                    document.getElementById(id).addEventListener('input', this.runAutoSuggest);
+                });
+                document.getElementById('global_hasBasement').addEventListener('change', () => {
+                    updateGlobalVisibility(); // UI
+                    // Maybe trigger calc or suggest?
+                });
+
+                document.getElementById('btnCalculate').addEventListener('click', this.calculateAll);
+                document.getElementById('btnExport').addEventListener('click', this.exportExcel);
+
+                // Init sub-modules
+                if(FoundationManager.init) FoundationManager.init();
+                if(BasementManager.init) BasementManager.init();
+                if(RoofManager.init) RoofManager.init();
+
+                // Initial Suggest
+                this.runAutoSuggest();
+            },
+            runAutoSuggest: function() {
+                const area = getVal('global_area');
+                const floors = getVal('global_floors');
+                const type = getSelectVal('global_projectType');
+
+                FoundationManager.autoSuggest(area, floors, type);
+                BasementManager.autoSuggest(area, floors, type);
+                Floor1Manager.autoSuggest(area, floors, type);
+                TypicalFloorManager.autoSuggest(area, floors, type);
+                RoofManager.autoSuggest(area, floors, type);
+            },
+            calculateAll: function() {
+                // Clear Table
+                const tbody = document.getElementById('resultTableBody');
+                tbody.innerHTML = '';
+                let grandTotal = 0;
+                let stt = 1;
+
+                const renderSection = (title, items) => {
+                    if(!items || items.length === 0) return;
+
+                    // Section Header
+                    const trHead = document.createElement('tr');
+                    trHead.className = 'bg-blue-100 font-bold';
+                    trHead.innerHTML = `<td colspan="9" class="px-3 py-2 text-primary">${title}</td>`;
+                    tbody.appendChild(trHead);
+
+                    items.forEach(item => {
+                        const total = item.qty * (item.priceVT + item.priceNC + item.priceM);
+                        grandTotal += total;
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="px-3 py-2 text-center text-gray-500">${stt++}</td>
+                            <td class="px-3 py-2 font-mono text-xs">${item.code}</td>
+                            <td class="px-3 py-2 text-gray-700">${item.name}</td>
+                            <td class="px-3 py-2 text-center">${item.unit}</td>
+                            <td class="px-3 py-2 text-right font-mono">${item.qty.toFixed(3)}</td>
+                            <td class="px-3 py-2 text-right text-xs">${new Intl.NumberFormat('vi-VN').format(item.priceVT)}</td>
+                            <td class="px-3 py-2 text-right text-xs">${new Intl.NumberFormat('vi-VN').format(item.priceNC)}</td>
+                            <td class="px-3 py-2 text-right text-xs">${new Intl.NumberFormat('vi-VN').format(item.priceM)}</td>
+                            <td class="px-3 py-2 text-right font-bold text-gray-800">${new Intl.NumberFormat('vi-VN').format(total)}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                };
+
+                // 1. Foundation
+                renderSection("I. PHẦN MÓNG", FoundationManager.calculate());
+
+                // 2. Basement
+                if(document.getElementById('global_hasBasement').checked) {
+                    renderSection("II. PHẦN HẦM", BasementManager.calculate());
+                }
+
+                // 3. Floor 1
+                renderSection("III. PHẦN THÂN - TẦNG 1", Floor1Manager.calculate());
+
+                // 4. Typical Floors
+                const floors = getVal('global_floors');
+                if(floors > 2) {
+                    renderSection(`IV. PHẦN THÂN - CÁC TẦNG TRÊN (x${floors-2} tầng)`, TypicalFloorManager.calculate());
+                }
+
+                // 5. Roof
+                renderSection("V. PHẦN MÁI & HOÀN THIỆN MÁI", RoofManager.calculate());
+
+                // Update Grand Total
+                document.getElementById('grandTotalDisplay').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(grandTotal);
+                document.getElementById('resultSection').classList.remove('hidden');
+
+                // Scroll to result
+                document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+            },
+            exportExcel: function() {
+                const table = document.querySelector('#resultSection table');
+                if(!table) return;
+                const wb = XLSX.utils.table_to_book(table, {sheet:"DuToanTongHop"});
+                XLSX.writeFile(wb, 'DuToanXayDung.xlsx');
+            }
+        };
+
+        // Initialize Global
+        GlobalManager.init();
+
+        // Basic Tab Logic
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all btns
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('border-primary', 'text-primary');
+                    b.classList.add('border-transparent', 'text-gray-500');
+                });
+                // Add active to click
+                btn.classList.remove('border-transparent', 'text-gray-500');
+                btn.classList.add('border-primary', 'text-primary');
+
+                // Hide all contents
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('block'));
+
+                // Show target
+                const target = document.getElementById(btn.dataset.target);
+                target.classList.remove('hidden');
+                target.classList.add('block');
+            });
+        });
+
+        // Global Visibility Logic
+        const global_floors = document.getElementById('global_floors');
+        const global_hasBasement = document.getElementById('global_hasBasement');
+        const nav_ham = document.getElementById('nav-ham');
+        const nav_tang2 = document.getElementById('nav-tang2');
+
+        function updateGlobalVisibility() {
+            // Basement
+            if (global_hasBasement.checked) {
+                nav_ham.style.display = 'inline-block';
+            } else {
+                nav_ham.style.display = 'none';
+            }
+
+            // Typical Floor (Show if > 2 floors)
+            const floors = parseInt(global_floors.value) || 1;
+            if (floors > 2) {
+                nav_tang2.style.display = 'inline-block';
+                nav_tang2.textContent = `Tầng Điển Hình (x${floors - 2})`;
+            } else {
+                nav_tang2.style.display = 'none';
+            }
+        }
+
+        global_floors.addEventListener('input', updateGlobalVisibility);
+        global_hasBasement.addEventListener('change', updateGlobalVisibility);
+
+        // Init
+        updateGlobalVisibility();
+    </script>
+</body>
+</html>
